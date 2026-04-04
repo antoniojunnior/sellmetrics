@@ -117,10 +117,10 @@ export const periodMetricsService = {
         break
       }
 
-      cogs_total += sale.units_sold * Number(costs.unit_cost)
-      prep_total += sale.units_sold * Number(costs.prep_cost_unit)
-      tax_total += Number(sale.gross_sales) * Number(costs.tax_rate)
-      amazon_fee_total += sale.units_sold * Number(costs.amazon_fee_unit)
+      cogs_total += Math.round(sale.units_sold * Number(costs.unit_cost) * 100) / 100
+      prep_total += Math.round(sale.units_sold * Number(costs.prep_cost_unit) * 100) / 100
+      tax_total += Math.round(Number(sale.gross_sales) * Number(costs.tax_rate) * 100) / 100
+      amazon_fee_total += Math.round(sale.units_sold * Number(costs.amazon_fee_unit) * 100) / 100
     }
 
     // BLOCO D — Cupons
@@ -130,10 +130,10 @@ export const periodMetricsService = {
     const coupon_redeemed = manualInputs?.coupon_redeemed || 0
     const coupon_redemption_rate = coupon_distributed > 0 ? coupon_redeemed / coupon_distributed : null
 
-    // Totais de custos variáveis
+    // Totais de custos variáveis (arredondado)
     const total_variable_cost = has_missing_costs 
       ? null 
-      : cogs_total + prep_total + tax_total + amazon_fee_total + coupon_cost_value
+      : Math.round((cogs_total + prep_total + tax_total + amazon_fee_total + coupon_cost_value) * 100) / 100
 
     // BLOCO E — Receita e margens
     const revenue_net = total_variable_cost !== null ? gross_sales - total_variable_cost : null

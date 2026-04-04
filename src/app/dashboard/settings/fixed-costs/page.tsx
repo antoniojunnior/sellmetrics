@@ -43,9 +43,7 @@ export default async function FixedCostsPage() {
             <input name="other_fixed_costs" type="number" step="0.01" className="w-full rounded border-slate-300 text-sm" required />
           </div>
           <div className="md:col-span-full lg:col-span-1">
-            <button type="submit" className="w-full bg-indigo-600 text-white py-2 px-4 rounded text-sm font-bold hover:bg-indigo-700 transition">
-              Salvar
-            </button>
+            <SubmitButton label="Salvar" className="w-full" />
           </div>
         </form>
       </section>

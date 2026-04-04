@@ -47,9 +47,7 @@ export default async function ManualInputsPage() {
             <input name="coupon_redeemed" type="number" className="w-full rounded border-slate-300 text-sm" required />
           </div>
           <div className="md:col-span-full lg:col-span-1">
-            <button type="submit" className="w-full bg-indigo-600 text-white py-2 px-4 rounded text-sm font-bold hover:bg-indigo-700 transition">
-              Salvar
-            </button>
+            <SubmitButton label="Salvar" className="w-full" />
           </div>
           <div className="md:col-span-full mt-2">
             <label className="text-xs font-semibold text-slate-500">Notas Adicionais</label>
