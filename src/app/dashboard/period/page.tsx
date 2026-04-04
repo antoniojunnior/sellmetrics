@@ -7,7 +7,7 @@ import { WaterfallRow } from '@/components/ui/waterfall-row'
 import { SectionBlock } from '@/components/ui/section-block'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PeriodSelector } from '@/components/ui/period-selector'
-import { SkeletonCard, SkeletonBar } from '@/components/ui/skeletons'
+import { SkeletonCard, SkeletonBar } from '@/components/ui/skeleton-loader'
 
 const formatCurrency = (val: number | null) => 
   val !== null ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val) : '—'
