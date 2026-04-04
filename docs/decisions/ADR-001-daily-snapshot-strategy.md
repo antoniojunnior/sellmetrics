@@ -1,14 +1,14 @@
 # ADR-001: Snapshots Diários como Fonte de Verdade
 
 ## Status
-Aceito
+Aceito (2026-04-04)
 
 ## Contexto
-O sistema precisa processar e exibir métricas de performance da Amazon de forma consistente, permitindo auditorias e garantindo que os dados visualizados hoje para uma data passada não mudem arbitrariamente.
+O Sellmetrics precisa oferecer dashboards financeiros de alta performance e consistência histórica para vendedores Amazon. Depender de chamadas de API (SP-API e Ads API) em tempo real para renderizar telas é inviável devido aos limites de taxa (rate limits) da Amazon, latência e a natureza volátil dos dados brutos.
 
 ## Decisão
-Utilizaremos a estratégia de snapshots diários como nossa única fonte de verdade (Single Source of Truth). Cada dia de processamento gera um registro imutável do estado dos dados naquele momento.
+Utilizaremos a estratégia de **Snapshots Diários Persistidos** como nossa única fonte de verdade (Single Source of Truth). O sistema consumirá as APIs da Amazon exclusivamente para popular tabelas locais (`daily_sales_snapshot` e `daily_ads_snapshot`). Uma vez capturado, o dado de um dia é tratado como fato histórico.
 
 ## Consequências
-- **Positivas:** Histórico imutável e auditável; performance otimizada para consultas históricas; isolamento de falhas em reprocessamentos retroativos.
-- **Negativas:** Maior consumo de armazenamento em disco; necessidade de pipelines de ingestão rigorosos para garantir a captura diária.
+- **Positivas:** Performance extrema na renderização de dashboards; Resiliência a quedas temporárias das APIs da Amazon; Capacidade de auditoria histórica.
+- **Negativas:** Necessidade de um pipeline de ingestão robusto; Aumento do consumo de armazenamento no banco de dados; Requer lógica explícita para reprocessamento de períodos se necessário.

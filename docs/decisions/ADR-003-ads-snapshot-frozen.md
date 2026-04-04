@@ -1,14 +1,14 @@
-# ADR-003: Snapshot de ADS não Reabre Histórico
+# ADR-003: Snapshot de ADS Congelado na Data
 
 ## Status
-Aceito
+Aceito (2026-04-04)
 
 ## Contexto
-A Amazon Advertising API pode atualizar dados de performance de anúncios por vários dias após o evento. No entanto, o fechamento financeiro e a conciliação de snapshots exigem um ponto de corte estável.
+A Amazon Ads API redistribui dados de atribuição de vendas por vários dias (ou semanas) após o clique original. Isso faz com que o ACOS e a Conversão de um dia passado mudem constantemente se consultados repetidamente. Para fins de fechamento gerencial e operacional, o usuário precisa de um número estável.
 
 ## Decisão
-O snapshot de dados de ADS será considerado "congelado" após sua captura inicial (ou após uma janela curta de estabilização pré-definida). Não reabriremos o histórico de snapshots para sincronizar atualizações tardias da Amazon que ocorram após o fechamento do snapshot diário.
+O snapshot diário de ADS será considerado **"congelado"** no momento da captura inicial (D-1). O sistema não reabrirá o histórico de snapshots de ADS para sincronizar atualizações tardias de atribuição da Amazon, a menos que um reprocessamento seja solicitado explicitamente.
 
 ## Consequências
-- **Positivas:** Consistência absoluta com relatórios de fechamento gerados anteriormente; previsibilidade de processamento.
-- **Negativas:** Pequenas divergências pontuais (<1%) podem ocorrer entre o painel da Amazon (que é dinâmico) e o sistema (que é estático/snapshot).
+- **Positivas:** Estabilidade absoluta dos indicadores de performance; Consistência entre relatórios gerados em momentos diferentes.
+- **Negativas:** Pequenas divergências pontuais (<1-2%) podem ocorrer entre o painel oficial da Amazon e o Sellmetrics.
