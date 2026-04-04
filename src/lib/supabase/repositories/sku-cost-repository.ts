@@ -3,36 +3,25 @@ import { SkuCostParameters } from '../types'
 
 export const skuCostRepository = {
   /**
-   * Implementação SCD2: Insere novo regime e fecha o anterior.
+   * Implementação SCD2: Chama RPC no banco para fechar anterior e abrir novo de forma atômica.
    */
-  async createCostParameters(data: Omit<SkuCostParameters, 'id' | 'valid_to' | 'created_at' | 'updated_at'>) {
+  async createCostParameters(data: Omit<SkuCostParameters, 'id' | 'valid_to' | 'created_at' | 'updated_at'>): Promise<void> {
     const supabase = await createClient()
     
-    // 1. Fechar o regime anterior (valid_to = valid_from do novo)
-    const { error: updateError } = await supabase
-      .from('sku_cost_parameters')
-      .update({ valid_to: data.valid_from })
-      .eq('account_id', data.account_id)
-      .eq('marketplace_id', data.marketplace_id)
-      .eq('sku', data.sku)
-      .is('valid_to', null)
+    const { error } = await supabase.rpc('create_sku_cost_regime', {
+      p_account_id: data.account_id,
+      p_marketplace_id: data.marketplace_id,
+      p_sku: data.sku,
+      p_unit_cost: data.unit_cost,
+      p_prep_cost_unit: data.prep_cost_unit,
+      p_tax_rate: data.tax_rate,
+      p_amazon_fee_unit: data.amazon_fee_unit,
+      p_valid_from: data.valid_from
+    })
 
-    if (updateError) {
-      throw new Error(`Failed to close previous cost regime: ${updateError.message}`)
+    if (error) {
+      throw new Error(`Failed to create cost regime (RPC): ${error.message}`)
     }
-
-    // 2. Inserir o novo regime
-    const { data: result, error: insertError } = await supabase
-      .from('sku_cost_parameters')
-      .insert({ ...data, valid_to: null })
-      .select()
-      .single()
-
-    if (insertError) {
-      throw new Error(`Failed to insert new cost parameters: ${insertError.message}`)
-    }
-
-    return result as SkuCostParameters
   },
 
   async getCostForDate(accountId: string, marketplaceId: string, sku: string, date: string) {
