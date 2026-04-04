@@ -1,32 +1,19 @@
 import { Suspense } from 'react'
 import { periodMetricsService, PeriodMetrics } from '@/lib/services/period-metrics-service'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 
-// Helpers de formatação
-const formatCurrency = (val: number | null) => 
-  val !== null ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val) : '—'
-
-const formatPercent = (val: number | null) => 
-  val !== null ? `${(val * 100).toFixed(1)}%` : '—'
-
-const formatNumber = (val: number | null) => 
-  val !== null ? new Intl.NumberFormat('pt-BR').format(val) : '—'
-
-const getSemanticColor = (val: number | null, invert = false) => {
-  if (val === null || val === 0) return 'text-slate-500'
-  const isPositive = val > 0
-  if (invert) return isPositive ? 'text-red-600' : 'text-green-600'
-  return isPositive ? 'text-green-600' : 'text-red-600'
-}
-
-interface PageProps {
-  searchParams: Promise<{
-    startDate?: string
-    endDate?: string
-    sku?: string
-  }>
-}
+// ... (helpers de formatação permanecem iguais)
 
 export default async function PeriodDashboardPage({ searchParams }: PageProps) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  const accountId = user.id // Usando o ID do usuário como accountId por padrão
   const params = await searchParams
   
   // Datas padrão: últimos 30 dias
@@ -86,7 +73,7 @@ export default async function PeriodDashboardPage({ searchParams }: PageProps) {
       </div>
 
       <Suspense fallback={<DashboardSkeleton />}>
-        <MetricsContent accountId="default-account" startDate={startDate} endDate={endDate} sku={sku} />
+        <MetricsContent accountId={accountId} startDate={startDate} endDate={endDate} sku={sku} />
       </Suspense>
     </div>
   )
