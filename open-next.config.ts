@@ -1,6 +1,13 @@
-export default {
+const config = {
   default: {
     minify: true,
-    buildCommand: 'npm run build',
+    override: {
+      wrapper: "cloudflare-node",
+      converter: "edge",
+      proxyExternalRequest: "fetch",
+    },
   },
-}
+  edgeExternals: ["node:crypto"],
+};
+
+export default config;
