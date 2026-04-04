@@ -1,5 +1,6 @@
 import { saveSkuCost } from '../actions'
 import { skuCostRepository } from '@/lib/supabase/repositories/sku-cost-repository'
+import { SkuCostParameters } from '@/lib/supabase/types'
 import { SectionBlock } from '@/components/ui/section-block'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { SubmitButton } from '../components/submit-button'
@@ -79,7 +80,7 @@ export default async function SkuCostsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50 text-sm text-text-secondary">
-                  {history.map((row: any) => {
+                  {history.map((row: SkuCostParameters) => {
                     const isCurrent = !row.valid_to || (row.valid_from <= today && row.valid_to > today)
                     const isFuture = row.valid_from > today
                     return (

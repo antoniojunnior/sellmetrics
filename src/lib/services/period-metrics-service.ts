@@ -3,6 +3,7 @@ import { dailySalesRepository } from '../supabase/repositories/daily-sales-repos
 import { fixedCostsRepository } from '../supabase/repositories/fixed-costs-repository'
 import { periodManualInputsRepository } from '../supabase/repositories/period-manual-inputs-repository'
 import { skuCostRepository } from '../supabase/repositories/sku-cost-repository'
+import { SkuCostParameters } from '../supabase/types'
 
 export interface PeriodMetrics {
   // BLOCO A — Volume
@@ -89,7 +90,7 @@ export const periodMetricsService = {
     let has_missing_costs = false
 
     // Cache local por SKU para evitar múltiplas buscas do mesmo SKU no mesmo período
-    const skuCostsMap: Record<string, any[]> = {}
+    const skuCostsMap: Record<string, SkuCostParameters[]> = {}
 
     for (const sale of salesSnapshots) {
       const skuKey = `${sale.marketplace_id}-${sale.sku}`
@@ -109,7 +110,7 @@ export const periodMetricsService = {
       // Lookup em memória do regime válido para o dia do snapshot
       const costs = regimes.find(r => 
         r.valid_from <= sale.snapshot_date && 
-        (r.valid_to > sale.snapshot_date || r.valid_to === null)
+        (r.valid_to === null || r.valid_to > sale.snapshot_date)
       )
 
       if (!costs) {

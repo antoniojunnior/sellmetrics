@@ -62,7 +62,7 @@ export interface PeriodManualInputs {
   coupon_distributed: number
   coupon_redeemed: number
   manual_notes: string | null
-  manual_adjustments: any | null
+  manual_adjustments: Record<string, unknown> | null
   created_at: string
   updated_at: string
 }
