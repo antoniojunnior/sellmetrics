@@ -88,22 +88,29 @@ export const periodMetricsService = {
     let amazon_fee_total = 0
     let has_missing_costs = false
 
-    // Cache local para evitar múltiplas consultas ao mesmo SKU/Data se houver repetição
-    const costCache: Record<string, any> = {}
+    // Cache local por SKU para evitar múltiplas buscas do mesmo SKU no mesmo período
+    const skuCostsMap: Record<string, any[]> = {}
 
     for (const sale of salesSnapshots) {
-      const cacheKey = `${sale.marketplace_id}-${sale.sku}-${sale.snapshot_date}`
-      let costs = costCache[cacheKey]
+      const skuKey = `${sale.marketplace_id}-${sale.sku}`
+      let regimes = skuCostsMap[skuKey]
 
-      if (!costs) {
-        costs = await skuCostRepository.getCostForDate(
+      if (!regimes) {
+        regimes = await skuCostRepository.getCostsByPeriod(
           accountId,
           sale.marketplace_id,
           sale.sku,
-          sale.snapshot_date
+          startDate,
+          endDate
         )
-        costCache[cacheKey] = costs
+        skuCostsMap[skuKey] = regimes
       }
+
+      // Lookup em memória do regime válido para o dia do snapshot
+      const costs = regimes.find(r => 
+        r.valid_from <= sale.snapshot_date && 
+        (r.valid_to > sale.snapshot_date || r.valid_to === null)
+      )
 
       if (!costs) {
         has_missing_costs = true

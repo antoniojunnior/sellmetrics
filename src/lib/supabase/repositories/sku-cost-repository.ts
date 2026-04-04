@@ -44,6 +44,27 @@ export const skuCostRepository = {
     return (data as SkuCostParameters | null)
   },
 
+  async getCostsByPeriod(accountId: string, marketplaceId: string, sku: string, startDate: string, endDate: string): Promise<SkuCostParameters[]> {
+    const supabase = await createClient()
+    
+    const { data, error } = await supabase
+      .from('sku_cost_parameters')
+      .select('*')
+      .eq('account_id', accountId)
+      .eq('marketplace_id', marketplaceId)
+      .eq('sku', sku)
+      // Um regime intersecta o período se (valid_from <= endDate) AND (valid_to >= startDate OR valid_to IS NULL)
+      .lte('valid_from', endDate)
+      .or(`valid_to.gte.${startDate},valid_to.is.null`)
+      .order('valid_from', { ascending: true })
+
+    if (error) {
+      throw new Error(`Failed to fetch costs by period: ${error.message}`)
+    }
+
+    return data as SkuCostParameters[]
+  },
+
   async getCostHistory(accountId: string, sku: string) {
     const supabase = await createClient()
     
