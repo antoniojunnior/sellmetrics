@@ -1,22 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Cores do Design System (Metrify Pattern) */
+  --color-background: #F3F4F8;
+  --color-surface: #FFFFFF;
+  --color-border: #E5E7EB;
+  
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+  
+  --color-accent: #7B5CF0;
+  --color-accent-light: #EDE9FE;
+  --color-accent-hover: #6D4FD8;
+  
+  --color-positive: #22C55E;
+  --color-positive-light: #DCFCE7;
+  --color-negative: #EF4444;
+  --color-negative-light: #FEE2E2;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FEF3C7;
+  --color-info: #3B82F6;
+  --color-info-light: #DBEAFE;
+
+  /* Tipografia */
+  --font-sans: 'Inter', sans-serif;
+  
+  --text-xs: 11px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 20px;
+  --text-base: 15px;
+  --text-base--line-height: 24px;
+  --text-lg: 18px;
+  --text-lg--line-height: 28px;
+  --text-xl: 22px;
+  --text-xl--line-height: 32px;
+  --text-2xl: 28px;
+  --text-2xl--line-height: 38px;
+  --text-3xl: 36px;
+  --text-3xl--line-height: 48px;
+
+  /* Sombras */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.10);
 }
 
-@layer base {
-  :root {
-    --background: #f8f8fa;
-    --foreground: #09090b;
-  }
+:root {
+  /* FORÇA TEMA CLARO INDEPENDENTE DO SISTEMA OPERACIONAL */
+  color-scheme: light !important;
+  --background: #F3F4F8;
+  --foreground: #111827;
+}
 
-  .dark {
-    --background: #0f0f11;
-    --foreground: #f8f8fa;
-  }
+/* Reset básico */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remove qualquer efeito de Dark Mode injetado pelo Tailwind v4 automático */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light !important;
+  }
+  body {
+    background-color: #F3F4F8 !important;
+    color: #111827 !important;
+  }
 }
