@@ -20,4 +20,4 @@ alter table ingestion_logs enable row level security;
 create policy "ingestion_logs_tenant_isolation"
   on ingestion_logs
   for all
-  using (account_id = current_setting('app.current_account_id', true));
+  using (account_id = auth.uid()::text);

@@ -43,7 +43,7 @@ alter table daily_sales_snapshot enable row level security;
 create policy "daily_sales_snapshot_tenant_isolation"
   on daily_sales_snapshot
   for all
-  using (account_id = current_setting('app.current_account_id', true));
+  using (account_id = auth.uid()::text);
 
 
 -- -----------------------------------------------------------------------------
@@ -85,7 +85,7 @@ alter table daily_ads_snapshot enable row level security;
 create policy "daily_ads_snapshot_tenant_isolation"
   on daily_ads_snapshot
   for all
-  using (account_id = current_setting('app.current_account_id', true));
+  using (account_id = auth.uid()::text);
 
 
 -- -----------------------------------------------------------------------------
@@ -140,7 +140,7 @@ alter table sku_cost_parameters enable row level security;
 create policy "sku_cost_parameters_tenant_isolation"
   on sku_cost_parameters
   for all
-  using (account_id = current_setting('app.current_account_id', true));
+  using (account_id = auth.uid()::text);
 
 
 -- -----------------------------------------------------------------------------
@@ -182,7 +182,7 @@ alter table fixed_costs_monthly enable row level security;
 create policy "fixed_costs_monthly_tenant_isolation"
   on fixed_costs_monthly
   for all
-  using (account_id = current_setting('app.current_account_id', true));
+  using (account_id = auth.uid()::text);
 
 
 -- -----------------------------------------------------------------------------
@@ -226,7 +226,7 @@ alter table period_manual_inputs enable row level security;
 create policy "period_manual_inputs_tenant_isolation"
   on period_manual_inputs
   for all
-  using (account_id = current_setting('app.current_account_id', true));
+  using (account_id = auth.uid()::text);
 
 
 -- =============================================================================

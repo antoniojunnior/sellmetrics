@@ -41,4 +41,4 @@ alter table sku_cost_parameters enable row level security;
 create policy "sku_cost_parameters_tenant_isolation"
   on sku_cost_parameters
   for all
-  using (account_id = current_setting('app.current_account_id', true));
+  using (account_id = auth.uid()::text);

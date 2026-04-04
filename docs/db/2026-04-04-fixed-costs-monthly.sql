@@ -32,4 +32,4 @@ alter table fixed_costs_monthly enable row level security;
 create policy "fixed_costs_monthly_tenant_isolation"
   on fixed_costs_monthly
   for all
-  using (account_id = current_setting('app.current_account_id', true));
+  using (account_id = auth.uid()::text);

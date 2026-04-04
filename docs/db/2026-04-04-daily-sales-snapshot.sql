@@ -32,4 +32,4 @@ alter table daily_sales_snapshot enable row level security;
 create policy "daily_sales_snapshot_tenant_isolation"
   on daily_sales_snapshot
   for all
-  using (account_id = current_setting('app.current_account_id', true));
+  using (account_id = auth.uid()::text);

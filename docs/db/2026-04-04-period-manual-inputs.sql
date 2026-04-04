@@ -35,4 +35,4 @@ alter table period_manual_inputs enable row level security;
 create policy "period_manual_inputs_tenant_isolation"
   on period_manual_inputs
   for all
-  using (account_id = current_setting('app.current_account_id', true));
+  using (account_id = auth.uid()::text);
