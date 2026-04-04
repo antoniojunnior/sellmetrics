@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { runIngestHistorical, runIngestYesterday } from './ingestion-actions'
-import { SectionBlock, StatusBadge, DataTable } from '@/components/ui/LayoutComponents'
+import { SectionBlock } from '@/components/ui/section-block'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { SubmitButton } from '../settings/components/submit-button'
 
 export default async function IngestionManagementPage() {
@@ -34,113 +35,80 @@ export default async function IngestionManagementPage() {
     .order('executed_at', { ascending: false })
     .limit(20)
 
-  const columns = [
-    { 
-      header: 'Data/Hora', 
-      key: 'executed_at',
-      className: 'font-mono text-slate-500',
-      render: (val: string) => new Date(val).toLocaleString('pt-BR')
-    },
-    { 
-      header: 'Operação', 
-      key: 'type',
-      className: 'font-bold capitalize'
-    },
-    { 
-      header: 'Status', 
-      key: 'status',
-      render: (val: string) => <StatusBadge status={val === 'success' ? 'ok' : 'error'} label={val} />
-    },
-    { 
-      header: 'Dias Proc.', 
-      key: 'days_processed',
-      className: 'text-center font-mono'
-    },
-    { 
-      header: 'Detalhes', 
-      key: 'error_message',
-      className: 'max-w-[200px] truncate text-xs text-slate-400',
-      render: (val: string) => val || '—'
-    }
-  ]
-
   return (
-    <div className="p-8 space-y-10">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Ingestão de Dados</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Controle a sincronização de dados entre a Amazon (SP-API e Ads API) e o banco de dados do Sellmetrics.
-          </p>
-        </div>
+    <div className="space-y-10">
+      <header>
+        <h1 className="text-2xl font-black text-text-primary tracking-tight">Ingestão de Dados</h1>
+        <p className="text-sm text-text-secondary mt-1">
+          Controle a sincronização de dados entre a Amazon e o Sellmetrics.
+        </p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* STATUS DOS SNAPSHOTS */}
         <div className="lg:col-span-1 space-y-8">
-          <SectionBlock title="Status de Sincronização">
-            <div className="space-y-6">
-              <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                <div>
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Vendas (SP-API)</p>
-                  <p className="text-lg font-bold text-slate-800 dark:text-slate-100">{lastSale?.snapshot_date || 'Nenhum dado'}</p>
-                </div>
-                <StatusBadge status={lastSale ? 'ok' : 'warning'} label={lastSale ? 'Atualizado' : 'Pendente'} />
+          <SectionBlock title="Status">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 bg-background rounded-lg border border-border">
+                <div><p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Vendas</p><p className="text-sm font-bold text-text-primary">{lastSale?.snapshot_date || '—'}</p></div>
+                <StatusBadge status={lastSale ? 'ok' : 'warning'} label={lastSale ? 'OK' : 'Vazio'} />
               </div>
-              <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                <div>
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Publicidade (ADS)</p>
-                  <p className="text-lg font-bold text-slate-800 dark:text-slate-100">{lastAds?.snapshot_date || 'Nenhum dado'}</p>
-                </div>
-                <StatusBadge status={lastAds ? 'ok' : 'warning'} label={lastAds ? 'Atualizado' : 'Pendente'} />
+              <div className="flex justify-between items-center p-3 bg-background rounded-lg border border-border">
+                <div><p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Publicidade</p><p className="text-sm font-bold text-text-primary">{lastAds?.snapshot_date || '—'}</p></div>
+                <StatusBadge status={lastAds ? 'ok' : 'warning'} label={lastAds ? 'OK' : 'Vazio'} />
               </div>
             </div>
           </SectionBlock>
 
           <SectionBlock title="Ação Rápida">
             <form action={runIngestYesterday.bind(null, accountId, marketplaceId, adsProfileId)}>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                Sincroniza os dados consolidados de ontem (D-1). Ideal para uso diário.
-              </p>
-              <SubmitButton label="Atualizar Ontem (D-1)" className="w-full" />
+              <p className="text-xs text-text-secondary mb-4">Sincroniza os dados consolidados de ontem.</p>
+              <SubmitButton label="Atualizar D-1" className="w-full" />
             </form>
           </SectionBlock>
         </div>
 
-        {/* CARGA HISTÓRICA & LOGS */}
         <div className="lg:col-span-2 space-y-8">
-          <SectionBlock 
-            title="Carga Histórica / Reprocessamento" 
-            className="border-indigo-100 dark:border-indigo-900/30"
-          >
-            <form action={runIngestHistorical} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+          <SectionBlock title="Carga Histórica">
+            <form action={runIngestHistorical} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
               <input type="hidden" name="account_id" value={accountId} />
               <input type="hidden" name="marketplace_id" value={marketplaceId} />
               <input type="hidden" name="ads_profile_id" value={adsProfileId} />
               
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Data Início</label>
-                <input name="startDate" type="date" className="w-full bg-white dark:bg-slate-900 rounded-xl border-slate-200 dark:border-slate-800 text-sm focus:ring-indigo-500 focus:border-indigo-500" required />
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-text-muted">Início</label>
+                <input name="startDate" type="date" className="w-full bg-surface rounded-xl border-border text-sm px-3 py-2" required />
               </div>
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Data Fim</label>
-                <input name="endDate" type="date" className="w-full bg-white dark:bg-slate-900 rounded-xl border-slate-200 dark:border-slate-800 text-sm focus:ring-indigo-500 focus:border-indigo-500" required />
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-text-muted">Fim</label>
+                <input name="endDate" type="date" className="w-full bg-surface rounded-xl border-border text-sm px-3 py-2" required />
               </div>
-              <div className="md:col-span-full lg:col-span-1">
-                <SubmitButton label="Executar" loadingLabel="Processando..." className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100" />
-              </div>
-              <p className="md:col-span-full text-xs text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg mt-2">
-                <strong>Atenção:</strong> Cargas históricas longas podem ser rate-limited pela Amazon. O sistema processa em lotes de 7 dias automaticamente.
-              </p>
+              <SubmitButton label="Executar" className="w-full h-[38px] bg-text-primary text-white" />
             </form>
           </SectionBlock>
 
-          <SectionBlock title="Logs de Sincronização">
-            <DataTable 
-              columns={columns} 
-              data={logs || []} 
-              emptyMessage="Nenhuma operação de ingestão registrada."
-            />
+          <SectionBlock title="Logs">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-border text-sm text-text-secondary">
+                <thead>
+                  <tr className="text-[10px] font-black text-text-muted uppercase tracking-widest">
+                    <th className="px-4 py-3 text-left">Data</th>
+                    <th className="px-4 py-3 text-left">Tipo</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-left">Dias</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {logs?.map((log) => (
+                    <tr key={log.id} className="hover:bg-background/50 transition-colors">
+                      <td className="px-4 py-3 text-xs">{new Date(log.executed_at).toLocaleString('pt-BR')}</td>
+                      <td className="px-4 py-3 capitalize font-medium text-text-primary">{log.type}</td>
+                      <td className="px-4 py-3"><StatusBadge status={log.status === 'success' ? 'ok' : 'error'} label={log.status} /></td>
+                      <td className="px-4 py-3 font-mono">{log.days_processed}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </SectionBlock>
         </div>
       </div>

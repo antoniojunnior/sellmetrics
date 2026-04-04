@@ -1,12 +1,13 @@
 import { Suspense } from 'react'
-import { periodMetricsService, PeriodMetrics } from '@/lib/services/period-metrics-service'
+import { periodMetricsService } from '@/lib/services/period-metrics-service'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { MetricCard } from '@/components/ui/MetricCard'
-import { WaterfallRow } from '@/components/ui/WaterfallRow'
-import { SectionBlock, StatusBadge } from '@/components/ui/LayoutComponents'
-import { PeriodSelector } from '@/components/ui/PeriodSelector'
-import { SkeletonCard, SkeletonBar } from '@/components/ui/Skeletons'
+import { MetricCard } from '@/components/ui/metric-card'
+import { WaterfallRow } from '@/components/ui/waterfall-row'
+import { SectionBlock } from '@/components/ui/section-block'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { PeriodSelector } from '@/components/ui/period-selector'
+import { SkeletonCard, SkeletonBar } from '@/components/ui/skeletons'
 
 const formatCurrency = (val: number | null) => 
   val !== null ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val) : '—'
@@ -31,13 +32,13 @@ export default async function PeriodDashboardPage({
   const sku = params.sku || ''
 
   return (
-    <div className="space-y-8 p-8">
+    <div className="space-y-8">
       {/* TOPO: Seletor e Status */}
       <div className="space-y-4">
         <PeriodSelector startDate={startDate} endDate={endDate} sku={sku} />
         <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">
+            <span className="w-2 h-2 rounded-full bg-positive animate-pulse" />
             Dados sincronizados: D-1 (Ontem)
           </div>
           <StatusBadge status="ok" label="Snapshot Completo" />
@@ -54,26 +55,22 @@ export default async function PeriodDashboardPage({
 async function MetricsContent({ accountId, startDate, endDate, sku }: { accountId: string, startDate: string, endDate: string, sku: string }) {
   const metrics = await periodMetricsService.calculateMetrics(accountId, startDate, endDate, sku || undefined)
 
-  // Cálculo de variações para visualização (simulado para UI profissional)
-  // Em produção, isso viria de um serviço comparando com período anterior
-  const trend = (val: number | null) => (val && val > 0 ? 'up' : 'neutral')
-
   return (
     <div className="space-y-8">
       {/* LINHA 1 — KPIs Principais */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard label="Receita Bruta" value={metrics.gross_sales.toFixed(2)} unit="R$" size="lg" highlight trend="up" trendValue="12.5%" />
-        <MetricCard label="Receita Líquida" value={metrics.revenue_net?.toFixed(2) || null} unit="R$" size="lg" highlight trend="up" trendValue="8.2%" />
-        <MetricCard label="Lucro do Período" value={metrics.profit_period?.toFixed(2) || null} unit="R$" size="lg" highlight trend="down" trendValue="2.1%" />
-        <MetricCard label="Margem pós ADS" value={(metrics.margin_post_ads! * 100).toFixed(1)} unit="%" size="lg" highlight />
+        <MetricCard label="Receita Bruta" value={metrics.gross_sales.toFixed(2)} unit="R$" highlight trend="up" trendValue="12.5%" />
+        <MetricCard label="Receita Líquida" value={metrics.revenue_net?.toFixed(2) || null} unit="R$" highlight trend="up" trendValue="8.2%" />
+        <MetricCard label="Lucro do Período" value={metrics.profit_period?.toFixed(2) || null} unit="R$" highlight trend="down" trendValue="2.1%" />
+        <MetricCard label="Margem pós ADS" value={metrics.margin_post_ads !== null ? (metrics.margin_post_ads * 100).toFixed(1) : null} unit="%" highlight />
       </div>
 
       {/* LINHA 2 — KPIs Secundários */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard label="ACOS" value={metrics.acos ? (metrics.acos * 100).toFixed(1) : null} unit="%" size="sm" />
-        <MetricCard label="TACOS" value={metrics.tacos ? (metrics.tacos * 100).toFixed(1) : null} unit="%" size="sm" />
-        <MetricCard label="Faturamento/Dia" value={metrics.revenue_per_day.toFixed(2)} unit="R$" size="sm" />
-        <MetricCard label="Líquido/Dia" value={metrics.net_per_day?.toFixed(2) || null} unit="R$" size="sm" />
+        <MetricCard label="ACOS" value={metrics.acos ? (metrics.acos * 100).toFixed(1) : null} unit="%" />
+        <MetricCard label="TACOS" value={metrics.tacos ? (metrics.tacos * 100).toFixed(1) : null} unit="%" />
+        <MetricCard label="Faturamento/Dia" value={metrics.revenue_per_day.toFixed(2)} unit="R$" />
+        <MetricCard label="Líquido/Dia" value={metrics.net_per_day?.toFixed(2) || null} unit="R$" />
       </div>
 
       {/* LINHA 3 — Waterfall e Performance */}
@@ -100,22 +97,22 @@ async function MetricsContent({ accountId, startDate, endDate, sku }: { accountI
         <div className="lg:col-span-5 space-y-8">
           <SectionBlock title="ADS & Performance">
             <div className="grid grid-cols-2 gap-y-6">
-              <div><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Spend</p><p className="text-xl font-bold">{formatCurrency(metrics.ads_spend)}</p></div>
-              <div><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Sales</p><p className="text-xl font-bold">{formatCurrency(metrics.ads_sales)}</p></div>
-              <div><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Cliques</p><p className="text-xl font-bold">{metrics.ads_clicks}</p></div>
-              <div><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Conversão</p><p className="text-xl font-bold">{(metrics.ads_conversion! * 100).toFixed(1)}%</p></div>
+              <div><p className="text-[10px] font-black text-text-muted uppercase mb-1">Spend</p><p className="text-xl font-bold text-text-primary">{formatCurrency(metrics.ads_spend)}</p></div>
+              <div><p className="text-[10px] font-black text-text-muted uppercase mb-1">Sales</p><p className="text-xl font-bold text-text-primary">{formatCurrency(metrics.ads_sales)}</p></div>
+              <div><p className="text-[10px] font-black text-text-muted uppercase mb-1">Cliques</p><p className="text-xl font-bold text-text-primary">{metrics.ads_clicks}</p></div>
+              <div><p className="text-[10px] font-black text-text-muted uppercase mb-1">Conversão</p><p className="text-xl font-bold text-text-primary">{(metrics.ads_conversion! * 100).toFixed(1)}%</p></div>
             </div>
           </SectionBlock>
 
           <SectionBlock title="Cupons">
             <div className="flex justify-between items-end">
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Resgates</p>
-                <p className="text-2xl font-bold">{metrics.coupon_redeemed} <span className="text-sm font-normal text-slate-400">/ {metrics.coupon_distributed}</span></p>
+                <p className="text-[10px] font-black text-text-muted uppercase mb-1">Resgates</p>
+                <p className="text-2xl font-bold text-text-primary">{metrics.coupon_redeemed} <span className="text-sm font-normal text-text-muted">/ {metrics.coupon_distributed}</span></p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Taxa</p>
-                <p className="text-xl font-bold text-indigo-500">{(metrics.coupon_redemption_rate! * 100).toFixed(1)}%</p>
+                <p className="text-[10px] font-black text-text-muted uppercase mb-1">Taxa</p>
+                <p className="text-xl font-bold text-accent">{(metrics.coupon_redemption_rate! * 100).toFixed(1)}%</p>
               </div>
             </div>
           </SectionBlock>
@@ -126,24 +123,24 @@ async function MetricsContent({ accountId, startDate, endDate, sku }: { accountI
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <SectionBlock title="Volume de Pedidos">
           <div className="space-y-4">
-            <div className="flex justify-between items-center"><span className="text-sm text-slate-500">Unidades</span><span className="font-bold">{metrics.units_sold}</span></div>
-            <div className="flex justify-between items-center"><span className="text-sm text-slate-500">Pedidos</span><span className="font-bold">{metrics.orders_count}</span></div>
-            <div className="flex justify-between items-center"><span className="text-sm text-slate-500">Ticket Médio</span><span className="font-bold">{formatCurrency(metrics.gross_sales / (metrics.orders_count || 1))}</span></div>
+            <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Unidades</span><span className="font-bold text-text-primary">{metrics.units_sold}</span></div>
+            <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Pedidos</span><span className="font-bold text-text-primary">{metrics.orders_count}</span></div>
+            <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Ticket Médio</span><span className="font-bold text-text-primary">{formatCurrency(metrics.gross_sales / (metrics.orders_count || 1))}</span></div>
           </div>
         </SectionBlock>
 
         <SectionBlock title="Rentabilidade">
           <div className="space-y-4">
-            <div className="flex justify-between items-center"><span className="text-sm text-slate-500">Lucro/Receita</span><span className="font-bold text-green-600">{(metrics.profit_over_revenue! * 100).toFixed(1)}%</span></div>
-            <div className="flex justify-between items-center"><span className="text-sm text-slate-500">Lucro/Investimento</span><span className="font-bold text-green-600">{(metrics.profit_over_investment! * 100).toFixed(1)}%</span></div>
-            <div className="flex justify-between items-center"><span className="text-sm text-slate-500">Markup</span><span className="font-bold text-indigo-500">{metrics.markup?.toFixed(2) || '—'}</span></div>
+            <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Lucro/Receita</span><span className="font-bold text-positive">{(metrics.profit_over_revenue! * 100).toFixed(1)}%</span></div>
+            <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Lucro/Investimento</span><span className="font-bold text-positive">{(metrics.profit_over_investment! * 100).toFixed(1)}%</span></div>
+            <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Markup</span><span className="font-bold text-accent">{metrics.markup?.toFixed(2) || '—'}</span></div>
           </div>
         </SectionBlock>
 
         <SectionBlock title="Resumo do Período">
-          <div className="h-full flex flex-col justify-center items-center text-center p-4 bg-slate-50 dark:bg-black/10 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
-            <p className="text-4xl font-black text-slate-300 dark:text-slate-700">{metrics.days}</p>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Dias Analisados</p>
+          <div className="h-full flex flex-col justify-center items-center text-center p-4 bg-background rounded-xl border border-dashed border-border">
+            <p className="text-4xl font-black text-text-muted/30">{metrics.days}</p>
+            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mt-2">Dias Analisados</p>
           </div>
         </SectionBlock>
       </div>

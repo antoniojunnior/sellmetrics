@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -25,7 +24,7 @@
   --color-info-light: #DBEAFE;
 
   /* Tipografia */
-  --font-sans: 'Inter', sans-serif;
+  --font-sans: var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
   
   --text-xs: 11px;
   --text-xs--line-height: 16px;
@@ -47,33 +46,27 @@
   --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.10);
 }
 
+@layer base {
+  :root {
+    color-scheme: light !important;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-background text-text-primary antialiased;
+    font-family: var(--font-sans);
+  }
+}
+
+/* Forçar tema claro fixo */
 :root {
-  /* FORÇA TEMA CLARO INDEPENDENTE DO SISTEMA OPERACIONAL */
-  color-scheme: light !important;
   --background: #F3F4F8;
   --foreground: #111827;
 }
 
-/* Reset básico */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html, body {
-  height: 100%;
-}
-
-body {
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  font-family: 'Inter', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Remove qualquer efeito de Dark Mode injetado pelo Tailwind v4 automático */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: light !important;
