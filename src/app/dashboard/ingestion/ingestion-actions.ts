@@ -4,8 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { ingestionService } from '@/lib/ingestion/ingestion-service'
 
-export async function runIngestYesterday(accountId: string, marketplaceId: string, adsProfileId: string) {
+export async function runIngestYesterday(formData: FormData) {
   const supabase = await createClient()
+  const accountId = formData.get('account_id') as string
+  const marketplaceId = formData.get('marketplace_id') as string
+  const adsProfileId = formData.get('ads_profile_id') as string
   
   try {
     const result = await ingestionService.ingestYesterday(accountId, marketplaceId, adsProfileId)

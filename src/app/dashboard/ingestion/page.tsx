@@ -60,7 +60,10 @@ export default async function IngestionManagementPage() {
           </SectionBlock>
 
           <SectionBlock title="Ação Rápida">
-            <form action={runIngestYesterday.bind(null, accountId, marketplaceId, adsProfileId)}>
+            <form action={runIngestYesterday}>
+              <input type="hidden" name="account_id" value={accountId} />
+              <input type="hidden" name="marketplace_id" value={marketplaceId} />
+              <input type="hidden" name="ads_profile_id" value={adsProfileId} />
               <p className="text-xs text-text-secondary mb-4">Sincroniza os dados consolidados de ontem.</p>
               <SubmitButton label="Atualizar D-1" className="w-full" />
             </form>
