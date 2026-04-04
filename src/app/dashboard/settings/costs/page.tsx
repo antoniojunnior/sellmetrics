@@ -17,48 +17,43 @@ export default async function SkuCostsPage() {
   }))
 
   return (
-    <div className="space-y-10">
-      <header>
-        <h1 className="text-2xl font-black text-text-primary tracking-tight">Parâmetros de Custo</h1>
-        <p className="text-sm text-text-secondary mt-1">Gestão de COGS, impostos e taxas por SKU com histórico SCD2.</p>
-      </header>
-
+    <div className="space-y-8">
       {/* Formulário Inline */}
       <SectionBlock 
         title="Novo Regime de Custo" 
         subtitle="As alterações fecham automaticamente o regime anterior e iniciam a nova vigência."
-        className="border-dashed"
+        className="border-dashed bg-background/30"
       >
-        <form action={saveSkuCost} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-6 items-end">
+        <form action={saveSkuCost} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 items-end">
           <input type="hidden" name="account_id" value={accountId} />
           <input type="hidden" name="marketplace_id" value={marketplaceId} />
           
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="text-[10px] font-black uppercase text-text-muted tracking-widest">SKU</label>
-            <input name="sku" type="text" className="w-full bg-surface rounded-xl border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" placeholder="EX: AMZ-001" required />
+            <input name="sku" type="text" className="w-full bg-surface rounded-lg border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" placeholder="EX: AMZ-001" required />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="text-[10px] font-black uppercase text-text-muted tracking-widest">COGS (Unit)</label>
-            <input name="unit_cost" type="number" step="0.0001" className="w-full bg-surface rounded-xl border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" required />
+            <input name="unit_cost" type="number" step="0.0001" className="w-full bg-surface rounded-lg border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" required />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="text-[10px] font-black uppercase text-text-muted tracking-widest">Prep Center</label>
-            <input name="prep_cost_unit" type="number" step="0.0001" className="w-full bg-surface rounded-xl border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" required />
+            <input name="prep_cost_unit" type="number" step="0.0001" className="w-full bg-surface rounded-lg border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" required />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="text-[10px] font-black uppercase text-text-muted tracking-widest">Imposto (%)</label>
-            <input name="tax_rate" type="number" step="0.01" className="w-full bg-surface rounded-xl border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" required />
+            <input name="tax_rate" type="number" step="0.01" className="w-full bg-surface rounded-lg border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" required />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="text-[10px] font-black uppercase text-text-muted tracking-widest">Taxa Amazon</label>
-            <input name="amazon_fee_unit" type="number" step="0.0001" className="w-full bg-surface rounded-xl border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" required />
+            <input name="amazon_fee_unit" type="number" step="0.0001" className="w-full bg-surface rounded-lg border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" required />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="text-[10px] font-black uppercase text-text-muted tracking-widest">Início</label>
-            <input name="valid_from" type="date" className="w-full bg-surface rounded-xl border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" required />
+            <input name="valid_from" type="date" className="w-full bg-surface rounded-lg border-border text-sm focus:ring-accent/20 focus:border-accent outline-none px-3 py-2" required />
           </div>
           <div>
-            <SubmitButton label="Salvar Regime" className="w-full h-[38px] shadow-sm" />
+            <SubmitButton label="Salvar" className="w-full h-[38px]" />
           </div>
         </form>
       </SectionBlock>
@@ -66,14 +61,14 @@ export default async function SkuCostsPage() {
       {/* Listagem de SKUs */}
       <div className="space-y-6">
         {skuData.map(({ sku, history }) => (
-          <SectionBlock 
-            key={sku} 
-            title={`SKU: ${sku}`} 
-            rightAction={<span className="text-[10px] font-bold text-text-muted uppercase">{history.length} Registros</span>}
-          >
+          <div key={sku} className="border border-border rounded-xl overflow-hidden bg-surface">
+            <header className="px-4 py-3 border-b border-border bg-slate-50/50 flex justify-between items-center">
+              <h3 className="text-sm font-bold text-text-primary">SKU: {sku}</h3>
+              <span className="text-[10px] font-bold text-text-muted uppercase">{history.length} Registros</span>
+            </header>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-border">
-                <thead>
+                <thead className="bg-slate-50/30">
                   <tr className="text-[10px] font-black text-text-muted uppercase tracking-widest">
                     <th className="px-4 py-3 text-left">COGS</th>
                     <th className="px-4 py-3 text-left">Prep</th>
@@ -88,15 +83,15 @@ export default async function SkuCostsPage() {
                     const isCurrent = !row.valid_to || (row.valid_from <= today && row.valid_to > today)
                     const isFuture = row.valid_from > today
                     return (
-                      <tr key={row.id} className="hover:bg-background/50 transition-colors">
-                        <td className="px-4 py-3 font-mono font-medium text-text-primary">R$ {row.unit_cost.toFixed(2)}</td>
-                        <td className="px-4 py-3 font-mono">R$ {row.prep_cost_unit.toFixed(2)}</td>
-                        <td className="px-4 py-3 font-mono">{(row.tax_rate * 100).toFixed(1)}%</td>
-                        <td className="px-4 py-3 font-mono">R$ {row.amazon_fee_unit.toFixed(2)}</td>
+                      <tr key={row.id} className="hover:bg-background/30 transition-colors">
+                        <td className="px-4 py-3 font-mono font-bold text-text-primary">R$ {row.unit_cost.toFixed(2)}</td>
+                        <td className="px-4 py-3 font-mono text-xs">R$ {row.prep_cost_unit.toFixed(2)}</td>
+                        <td className="px-4 py-3 font-mono text-xs">{(row.tax_rate * 100).toFixed(1)}%</td>
+                        <td className="px-4 py-3 font-mono text-xs">R$ {row.amazon_fee_unit.toFixed(2)}</td>
                         <td className="px-4 py-3">
                           {isFuture ? <StatusBadge status="pending" label="Futuro" /> : isCurrent ? <StatusBadge status="ok" label="Vigente" /> : <StatusBadge status="pending" label="Encerrado" />}
                         </td>
-                        <td className="px-4 py-3 text-xs">
+                        <td className="px-4 py-3 text-[11px] text-text-muted">
                           {row.valid_from} {row.valid_to ? `até ${row.valid_to}` : '— Atual'}
                         </td>
                       </tr>
@@ -105,7 +100,7 @@ export default async function SkuCostsPage() {
                 </tbody>
               </table>
             </div>
-          </SectionBlock>
+          </div>
         ))}
       </div>
     </div>
