@@ -1,8 +1,15 @@
 import { createClient } from '../server'
 import { DailyAdsSnapshot } from '../types'
 
+export interface AdsSum {
+  ads_spend: number
+  ads_sales: number
+  ads_clicks: number
+  ads_orders: number
+}
+
 export const dailyAdsRepository = {
-  async upsertDailyAdsSnapshot(data: Omit<DailyAdsSnapshot, 'id' | 'created_at' | 'updated_at'>) {
+  async upsertDailyAdsSnapshot(data: Omit<DailyAdsSnapshot, 'id' | 'created_at' | 'updated_at'>): Promise<DailyAdsSnapshot> {
     const supabase = await createClient()
     
     const { data: result, error } = await supabase
@@ -20,7 +27,7 @@ export const dailyAdsRepository = {
     return result as DailyAdsSnapshot
   },
 
-  async getAdsByPeriod(accountId: string, startDate: string, endDate: string) {
+  async getAdsByPeriod(accountId: string, startDate: string, endDate: string): Promise<DailyAdsSnapshot[]> {
     const supabase = await createClient()
     
     const { data, error } = await supabase
@@ -38,26 +45,25 @@ export const dailyAdsRepository = {
     return data as DailyAdsSnapshot[]
   },
 
-  async getAdsSumByPeriod(accountId: string, startDate: string, endDate: string) {
+  async getAdsSumByPeriod(accountId: string, startDate: string, endDate: string): Promise<AdsSum> {
     const supabase = await createClient()
     
     const { data, error } = await supabase
       .from('daily_ads_snapshot')
-      .select('ads_spend.sum(), ads_sales.sum(), ads_clicks.sum(), ads_orders.sum()')
+      .select('ads_spend, ads_sales, ads_clicks, ads_orders')
       .eq('account_id', accountId)
       .gte('snapshot_date', startDate)
       .lte('snapshot_date', endDate)
-      .single()
 
     if (error) {
       throw new Error(`Failed to fetch ads sum: ${error.message}`)
     }
 
-    return {
-      ads_spend: (data as any).sum_ads_spend || 0,
-      ads_sales: (data as any).sum_ads_sales || 0,
-      ads_clicks: (data as any).sum_ads_clicks || 0,
-      ads_orders: (data as any).sum_ads_orders || 0
-    }
+    return data.reduce((acc, curr) => ({
+      ads_spend: acc.ads_spend + Number(curr.ads_spend),
+      ads_sales: acc.ads_sales + Number(curr.ads_sales),
+      ads_clicks: acc.ads_clicks + curr.ads_clicks,
+      ads_orders: acc.ads_orders + curr.ads_orders
+    }), { ads_spend: 0, ads_sales: 0, ads_clicks: 0, ads_orders: 0 })
   }
 }

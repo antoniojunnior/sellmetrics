@@ -1,8 +1,14 @@
 import { createClient } from '../server'
 import { DailySalesSnapshot } from '../types'
 
+export interface SalesSum {
+  orders_count: number
+  units_sold: number
+  gross_sales: number
+}
+
 export const dailySalesRepository = {
-  async upsertDailySalesSnapshot(data: Omit<DailySalesSnapshot, 'id' | 'created_at' | 'updated_at'>) {
+  async upsertDailySalesSnapshot(data: Omit<DailySalesSnapshot, 'id' | 'created_at' | 'updated_at'>): Promise<DailySalesSnapshot> {
     const supabase = await createClient()
     
     const { data: result, error } = await supabase
@@ -14,14 +20,13 @@ export const dailySalesRepository = {
       .single()
 
     if (error) {
-      console.error('Error in upsertDailySalesSnapshot:', error)
       throw new Error(`Failed to upsert sales snapshot: ${error.message}`)
     }
 
     return result as DailySalesSnapshot
   },
 
-  async getSalesByPeriod(accountId: string, startDate: string, endDate: string, sku?: string) {
+  async getSalesByPeriod(accountId: string, startDate: string, endDate: string, sku?: string): Promise<DailySalesSnapshot[]> {
     const supabase = await createClient()
     
     let query = supabase
@@ -44,25 +49,24 @@ export const dailySalesRepository = {
     return data as DailySalesSnapshot[]
   },
 
-  async getSalesSumByPeriod(accountId: string, startDate: string, endDate: string) {
+  async getSalesSumByPeriod(accountId: string, startDate: string, endDate: string): Promise<SalesSum> {
     const supabase = await createClient()
     
     const { data, error } = await supabase
       .from('daily_sales_snapshot')
-      .select('orders_count.sum(), units_sold.sum(), gross_sales.sum()')
+      .select('orders_count, units_sold, gross_sales')
       .eq('account_id', accountId)
       .gte('snapshot_date', startDate)
       .lte('snapshot_date', endDate)
-      .single()
 
     if (error) {
       throw new Error(`Failed to fetch sales sum: ${error.message}`)
     }
 
-    return {
-      orders_count: (data as any).sum_orders_count || 0,
-      units_sold: (data as any).sum_units_sold || 0,
-      gross_sales: (data as any).sum_gross_sales || 0
-    }
+    return data.reduce((acc, curr) => ({
+      orders_count: acc.orders_count + curr.orders_count,
+      units_sold: acc.units_sold + curr.units_sold,
+      gross_sales: acc.gross_sales + Number(curr.gross_sales)
+    }), { orders_count: 0, units_sold: 0, gross_sales: 0 })
   }
 }

@@ -1,8 +1,16 @@
 import { createClient } from '../server'
 import { FixedCostsMonthly } from '../types'
 
+export interface ProportionalFixedCost {
+  accounting_fees: number
+  rent: number
+  amazon_prime: number
+  other_fixed_costs: number
+  total_fixed_period: number
+}
+
 export const fixedCostsRepository = {
-  async upsertFixedCostsMonth(data: Omit<FixedCostsMonthly, 'id' | 'total_fixed_month' | 'created_at' | 'updated_at'>) {
+  async upsertFixedCostsMonth(data: Omit<FixedCostsMonthly, 'id' | 'total_fixed_month' | 'created_at' | 'updated_at'>): Promise<FixedCostsMonthly> {
     const supabase = await createClient()
     
     const { data: result, error } = await supabase
@@ -20,13 +28,10 @@ export const fixedCostsRepository = {
     return result as FixedCostsMonthly
   },
 
-  /**
-   * Retorna os custos fixos que intersectam o período e calcula o rateio.
-   */
-  async getFixedCostsByPeriod(accountId: string, startDate: string, endDate: string) {
+  async getFixedCostsByPeriod(accountId: string, startDate: string, endDate: string): Promise<ProportionalFixedCost> {
     const supabase = await createClient()
     
-    // Simplificação: busca os meses que cobrem o intervalo
+    // Busca os meses que intersectam o período
     const startMonth = startDate.substring(0, 7) + '-01'
     const endMonth = endDate.substring(0, 7) + '-01'
 
@@ -38,30 +43,41 @@ export const fixedCostsRepository = {
       .lte('year_month', endMonth)
 
     if (error) {
-      throw new Error(`Failed to fetch fixed costs by period: ${error.message}`)
+      throw new Error(`Failed to fetch fixed costs: ${error.message}`)
     }
 
-    const fixedCosts = data as FixedCostsMonthly[]
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    
+    const totals: ProportionalFixedCost = {
+      accounting_fees: 0,
+      rent: 0,
+      amazon_prime: 0,
+      other_fixed_costs: 0,
+      total_fixed_period: 0
+    }
 
-    // Lógica de rateio proporcional (pode ser expandida conforme necessidade)
-    const periodStart = new Date(startDate)
-    const periodEnd = new Date(endDate)
-    const totalDays = Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
-
-    let totalProportionalCost = 0
-
-    fixedCosts.forEach(cost => {
-      const monthDate = new Date(cost.year_month)
-      const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate()
+    data.forEach((monthData) => {
+      const monthStart = new Date(monthData.year_month)
+      const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0)
       
-      // Aqui calcularíamos a intersecção exata de dias, mas para simplificação inicial:
-      // Rateio por dia = total_fixed_month / dias_do_mês
-      const dailyCost = cost.total_fixed_month / daysInMonth
+      // Determina o intervalo de intersecção entre o mês e o período solicitado
+      const intersectStart = start > monthStart ? start : monthStart
+      const intersectEnd = end < monthEnd ? end : monthEnd
       
-      // Cálculo simplificado: assumes todos os dias do período estão dentro dos meses retornados
-      // Em uma implementação real, iteraríamos dia a dia ou calcularíamos intersecções.
+      if (intersectStart <= intersectEnd) {
+        const daysInMonth = monthEnd.getDate()
+        const daysInIntersect = Math.ceil((intersectEnd.getTime() - intersectStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+        const ratio = daysInIntersect / daysInMonth
+
+        totals.accounting_fees += Number(monthData.accounting_fees) * ratio
+        totals.rent += Number(monthData.rent) * ratio
+        totals.amazon_prime += Number(monthData.amazon_prime) * ratio
+        totals.other_fixed_costs += Number(monthData.other_fixed_costs) * ratio
+        totals.total_fixed_period += Number(monthData.total_fixed_month) * ratio
+      }
     })
 
-    return fixedCosts
+    return totals
   }
 }
