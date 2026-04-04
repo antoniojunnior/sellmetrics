@@ -1,5 +1,91 @@
 {
-  "node": {},
+  "node": {
+    "4052f9975947544a654de6b7d18e42b6c42a00e976": {
+      "workers": {
+        "app/dashboard/settings/costs/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fantoniojunnior%2FDocuments%2Fcodigos%2Fsellmetrics%2Fsrc%2Fapp%2Fdashboard%2Fsettings%2Factions.ts%22%2C%5B%7B%22id%22%3A%224052f9975947544a654de6b7d18e42b6c42a00e976%22%2C%22exportedName%22%3A%22saveFixedCosts%22%7D%2C%7B%22id%22%3A%22407fa75f184f68bbcf505b6548cebe4907ec209a4c%22%2C%22exportedName%22%3A%22saveManualInputs%22%7D%2C%7B%22id%22%3A%22409ca5f95aa4d1544db3269b6cc9e22549e866e988%22%2C%22exportedName%22%3A%22saveSkuCost%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/settings/fixed-costs/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fantoniojunnior%2FDocuments%2Fcodigos%2Fsellmetrics%2Fsrc%2Fapp%2Fdashboard%2Fsettings%2Factions.ts%22%2C%5B%7B%22id%22%3A%224052f9975947544a654de6b7d18e42b6c42a00e976%22%2C%22exportedName%22%3A%22saveFixedCosts%22%7D%2C%7B%22id%22%3A%22407fa75f184f68bbcf505b6548cebe4907ec209a4c%22%2C%22exportedName%22%3A%22saveManualInputs%22%7D%2C%7B%22id%22%3A%22409ca5f95aa4d1544db3269b6cc9e22549e866e988%22%2C%22exportedName%22%3A%22saveSkuCost%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/settings/manual-inputs/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fantoniojunnior%2FDocuments%2Fcodigos%2Fsellmetrics%2Fsrc%2Fapp%2Fdashboard%2Fsettings%2Factions.ts%22%2C%5B%7B%22id%22%3A%224052f9975947544a654de6b7d18e42b6c42a00e976%22%2C%22exportedName%22%3A%22saveFixedCosts%22%7D%2C%7B%22id%22%3A%22407fa75f184f68bbcf505b6548cebe4907ec209a4c%22%2C%22exportedName%22%3A%22saveManualInputs%22%7D%2C%7B%22id%22%3A%22409ca5f95aa4d1544db3269b6cc9e22549e866e988%22%2C%22exportedName%22%3A%22saveSkuCost%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/settings/costs/page": "rsc",
+        "app/dashboard/settings/fixed-costs/page": "rsc",
+        "app/dashboard/settings/manual-inputs/page": "rsc"
+      }
+    },
+    "407fa75f184f68bbcf505b6548cebe4907ec209a4c": {
+      "workers": {
+        "app/dashboard/settings/costs/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fantoniojunnior%2FDocuments%2Fcodigos%2Fsellmetrics%2Fsrc%2Fapp%2Fdashboard%2Fsettings%2Factions.ts%22%2C%5B%7B%22id%22%3A%224052f9975947544a654de6b7d18e42b6c42a00e976%22%2C%22exportedName%22%3A%22saveFixedCosts%22%7D%2C%7B%22id%22%3A%22407fa75f184f68bbcf505b6548cebe4907ec209a4c%22%2C%22exportedName%22%3A%22saveManualInputs%22%7D%2C%7B%22id%22%3A%22409ca5f95aa4d1544db3269b6cc9e22549e866e988%22%2C%22exportedName%22%3A%22saveSkuCost%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/settings/fixed-costs/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fantoniojunnior%2FDocuments%2Fcodigos%2Fsellmetrics%2Fsrc%2Fapp%2Fdashboard%2Fsettings%2Factions.ts%22%2C%5B%7B%22id%22%3A%224052f9975947544a654de6b7d18e42b6c42a00e976%22%2C%22exportedName%22%3A%22saveFixedCosts%22%7D%2C%7B%22id%22%3A%22407fa75f184f68bbcf505b6548cebe4907ec209a4c%22%2C%22exportedName%22%3A%22saveManualInputs%22%7D%2C%7B%22id%22%3A%22409ca5f95aa4d1544db3269b6cc9e22549e866e988%22%2C%22exportedName%22%3A%22saveSkuCost%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/settings/manual-inputs/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fantoniojunnior%2FDocuments%2Fcodigos%2Fsellmetrics%2Fsrc%2Fapp%2Fdashboard%2Fsettings%2Factions.ts%22%2C%5B%7B%22id%22%3A%224052f9975947544a654de6b7d18e42b6c42a00e976%22%2C%22exportedName%22%3A%22saveFixedCosts%22%7D%2C%7B%22id%22%3A%22407fa75f184f68bbcf505b6548cebe4907ec209a4c%22%2C%22exportedName%22%3A%22saveManualInputs%22%7D%2C%7B%22id%22%3A%22409ca5f95aa4d1544db3269b6cc9e22549e866e988%22%2C%22exportedName%22%3A%22saveSkuCost%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/settings/costs/page": "rsc",
+        "app/dashboard/settings/fixed-costs/page": "rsc",
+        "app/dashboard/settings/manual-inputs/page": "rsc"
+      }
+    },
+    "409ca5f95aa4d1544db3269b6cc9e22549e866e988": {
+      "workers": {
+        "app/dashboard/settings/costs/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fantoniojunnior%2FDocuments%2Fcodigos%2Fsellmetrics%2Fsrc%2Fapp%2Fdashboard%2Fsettings%2Factions.ts%22%2C%5B%7B%22id%22%3A%224052f9975947544a654de6b7d18e42b6c42a00e976%22%2C%22exportedName%22%3A%22saveFixedCosts%22%7D%2C%7B%22id%22%3A%22407fa75f184f68bbcf505b6548cebe4907ec209a4c%22%2C%22exportedName%22%3A%22saveManualInputs%22%7D%2C%7B%22id%22%3A%22409ca5f95aa4d1544db3269b6cc9e22549e866e988%22%2C%22exportedName%22%3A%22saveSkuCost%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/settings/fixed-costs/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fantoniojunnior%2FDocuments%2Fcodigos%2Fsellmetrics%2Fsrc%2Fapp%2Fdashboard%2Fsettings%2Factions.ts%22%2C%5B%7B%22id%22%3A%224052f9975947544a654de6b7d18e42b6c42a00e976%22%2C%22exportedName%22%3A%22saveFixedCosts%22%7D%2C%7B%22id%22%3A%22407fa75f184f68bbcf505b6548cebe4907ec209a4c%22%2C%22exportedName%22%3A%22saveManualInputs%22%7D%2C%7B%22id%22%3A%22409ca5f95aa4d1544db3269b6cc9e22549e866e988%22%2C%22exportedName%22%3A%22saveSkuCost%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/settings/manual-inputs/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fantoniojunnior%2FDocuments%2Fcodigos%2Fsellmetrics%2Fsrc%2Fapp%2Fdashboard%2Fsettings%2Factions.ts%22%2C%5B%7B%22id%22%3A%224052f9975947544a654de6b7d18e42b6c42a00e976%22%2C%22exportedName%22%3A%22saveFixedCosts%22%7D%2C%7B%22id%22%3A%22407fa75f184f68bbcf505b6548cebe4907ec209a4c%22%2C%22exportedName%22%3A%22saveManualInputs%22%7D%2C%7B%22id%22%3A%22409ca5f95aa4d1544db3269b6cc9e22549e866e988%22%2C%22exportedName%22%3A%22saveSkuCost%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/settings/costs/page": "rsc",
+        "app/dashboard/settings/fixed-costs/page": "rsc",
+        "app/dashboard/settings/manual-inputs/page": "rsc"
+      }
+    },
+    "40ccaf95260d58e8c6e9d527d5d5cf8b43aeaa73ad": {
+      "workers": {
+        "app/dashboard/ingestion/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fantoniojunnior%2FDocuments%2Fcodigos%2Fsellmetrics%2Fsrc%2Fapp%2Fdashboard%2Fingestion%2Fingestion-actions.ts%22%2C%5B%7B%22id%22%3A%2240ccaf95260d58e8c6e9d527d5d5cf8b43aeaa73ad%22%2C%22exportedName%22%3A%22runIngestHistorical%22%7D%2C%7B%22id%22%3A%2270b61a8490276b204d77d6f1963b8aedb31600013a%22%2C%22exportedName%22%3A%22runIngestYesterday%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/ingestion/page": "rsc"
+      }
+    },
+    "70b61a8490276b204d77d6f1963b8aedb31600013a": {
+      "workers": {
+        "app/dashboard/ingestion/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fantoniojunnior%2FDocuments%2Fcodigos%2Fsellmetrics%2Fsrc%2Fapp%2Fdashboard%2Fingestion%2Fingestion-actions.ts%22%2C%5B%7B%22id%22%3A%2240ccaf95260d58e8c6e9d527d5d5cf8b43aeaa73ad%22%2C%22exportedName%22%3A%22runIngestHistorical%22%7D%2C%7B%22id%22%3A%2270b61a8490276b204d77d6f1963b8aedb31600013a%22%2C%22exportedName%22%3A%22runIngestYesterday%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/ingestion/page": "rsc"
+      }
+    }
+  },
   "edge": {},
   "encryptionKey": "50y2Chn2Ujk1/GNN/kxQmaJc7L8SYN5qWWlS4RVcsMc="
 }
