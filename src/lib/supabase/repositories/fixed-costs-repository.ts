@@ -59,6 +59,7 @@ export const fixedCostsRepository = {
 
     data.forEach((monthData) => {
       const monthStart = new Date(monthData.year_month)
+      // Garante que o UTC não interfira no cálculo da data (usando o último dia do mês)
       const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0)
       
       // Determina o intervalo de intersecção entre o mês e o período solicitado
@@ -67,7 +68,10 @@ export const fixedCostsRepository = {
       
       if (intersectStart <= intersectEnd) {
         const daysInMonth = monthEnd.getDate()
-        const daysInIntersect = Math.ceil((intersectEnd.getTime() - intersectStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+        // Cálculo da diferença de dias (inclusivo)
+        const diffInMs = intersectEnd.getTime() - intersectStart.getTime()
+        const daysInIntersect = Math.ceil(diffInMs / (1000 * 60 * 60 * 24)) + 1
+        
         const ratio = daysInIntersect / daysInMonth
 
         totals.accounting_fees += Number(monthData.accounting_fees) * ratio
