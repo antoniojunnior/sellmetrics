@@ -1,7 +1,0 @@
-{
-  "/dashboard/period/page": "app/dashboard/period/page.js",
-  "/dashboard/ingestion/page": "app/dashboard/ingestion/page.js",
-  "/dashboard/settings/manual-inputs/page": "app/dashboard/settings/manual-inputs/page.js",
-  "/dashboard/settings/fixed-costs/page": "app/dashboard/settings/fixed-costs/page.js",
-  "/dashboard/settings/costs/page": "app/dashboard/settings/costs/page.js"
-}
