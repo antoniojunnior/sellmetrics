@@ -2,3 +2,7 @@ name = "sellmetrics"
 pages_build_output_dir = ".open-next"
 compatibility_date = "2024-11-18"
 compatibility_flags = ["nodejs_compat"]
+
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://sua-url-aqui.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "sua-chave-anon-aqui"
