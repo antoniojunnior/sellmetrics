@@ -1,9 +1,0 @@
-name = "sellmetrics"
-compatibility_date = "2024-11-18"
-compatibility_flags = ["nodejs_compat"]
-
-[site]
-bucket = ".open-next/assets"
-
-[vars]
-# Variáveis de ambiente podem ser colocadas aqui ou no painel
