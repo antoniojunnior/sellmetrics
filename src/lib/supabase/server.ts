@@ -8,7 +8,9 @@ export async function createClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !key) {
-    throw new Error('Supabase environment variables (URL/KEY) are missing.')
+    // Retornamos null ou tratamos o erro de forma que não derrube o processo global
+    console.error('Supabase keys are missing from environment variables.')
+    throw new Error('Supabase configuration is incomplete.')
   }
 
   return createServerClient(url, key, {
@@ -22,9 +24,7 @@ export async function createClient() {
             cookieStore.set(name, value, options)
           )
         } catch {
-          // The `setAll` method was called from a Server Component.
-          // This can be ignored if you have middleware refreshing
-          // user sessions.
+          // Ignorado em Server Components
         }
       },
     },
