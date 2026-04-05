@@ -1,6 +1,5 @@
 /**
  * Cliente para Amazon Ads API
- * Documentação: https://advertising.amazon.com/API/docs/en-us/reporting/v3/report-types/sponsored-products
  */
 
 export interface AdsApiReportRecord {
@@ -12,41 +11,40 @@ export interface AdsApiReportRecord {
 }
 
 export const adsApiClient = {
-  /**
-   * Busca relatório de Sponsored Products
-   * Janela de atribuição: 7 dias (fixa conforme PRD)
-   * ReportType: sp (Sponsored Products)
-   * TimeUnit: DAILY
-   */
   async getSponsoredProductsReport(
     profileId: string,
     startDate: string,
     endDate: string
   ): Promise<AdsApiReportRecord[]> {
-    // 1. Obter Token de Acesso
-    // 2. POST /reporting/reports (V3) ou /v2/sp/reports
-    // 3. Aguardar disponibilidade
-    // 4. Download e Parse
-    
-    console.log(`[Ads-API] Solicitando relatório ADS para profile ${profileId} (${startDate} a ${endDate})`)
-    
-    // Simulação da resposta da API
+    const clientId = process.env.AMAZON_ADS_API_CLIENT_ID
+
+    if (!clientId || clientId.includes('yyy')) {
+      console.log(`[Ads-API] Credenciais ausentes. Gerando dados simulados para profile ${profileId}...`)
+      return this.generateMockData(startDate, endDate)
+    }
+
+    // TODO: Implementação real da chamada via fetch para a Amazon Ads
+    console.log(`[Ads-API] Chamada real para profile ${profileId} (${startDate} a ${endDate})`)
     return []
   },
 
-  /**
-   * Helper para retry exponencial
-   */
-  async withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
-    try {
-      return await fn()
-    } catch (error: any) {
-      if (retries > 0 && (error?.status === 429 || error?.status >= 500)) {
-        const delay = Math.pow(2, 3 - retries) * 1000
-        await new Promise(resolve => setTimeout(resolve, delay))
-        return this.withRetry(fn, retries - 1)
-      }
-      throw error
+  generateMockData(startStr: string, endStr: string): AdsApiReportRecord[] {
+    const start = new Date(startStr)
+    const end = new Date(endStr)
+    const records: AdsApiReportRecord[] = []
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0]
+      const spend = Math.floor(Math.random() * 50) + 10
+      
+      records.push({
+        date: dateStr,
+        adsSpend: spend,
+        adsSales: spend * (Math.random() * 5 + 2), // ROAS entre 2 e 7
+        adsClicks: Math.floor(Math.random() * 100) + 20,
+        adsOrders: Math.floor(Math.random() * 10) + 1
+      })
     }
+    return records
   }
 }

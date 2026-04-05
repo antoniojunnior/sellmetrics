@@ -7,7 +7,8 @@ import { SubmitButton } from '../settings/components/submit-button'
 
 export default async function IngestionManagementPage() {
   const supabase = await createClient()
-  const accountId = 'default-account'
+  const { data: { user } } = await supabase.auth.getUser()
+  const accountId = user?.id || 'default-account'
   const marketplaceId = 'ATVPDKIKX0DER'
   const adsProfileId = 'profile-1'
 

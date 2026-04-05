@@ -1,6 +1,5 @@
 /**
  * Cliente para Amazon Selling Partner API (SP-API)
- * Documentação: https://developer-docs.amazon.com/sp-api/docs/report-type-values-analytics#sales-and-traffic-business-reports
  */
 
 export interface SpApiSalesRecord {
@@ -12,41 +11,45 @@ export interface SpApiSalesRecord {
 }
 
 export const spApiClient = {
-  /**
-   * Busca o Sales & Traffic Business Report
-   * ReportType: GET_SALES_AND_TRAFFIC_REPORT
-   * Granularidade fixa: dateGranularity=DAY, asinGranularity=SKU
-   */
   async getSalesAndTrafficReport(
     accountId: string,
     startDate: string,
     endDate: string
   ): Promise<SpApiSalesRecord[]> {
-    // 1. Obter Token de Acesso (Lógica de OAuth/LWA)
-    // 2. Criar Relatório (POST /reports/2021-06-30/reports)
-    // 3. Poll de status até COMPLETED
-    // 4. Baixar documento e processar JSON/Tab-delimited
+    const clientId = process.env.AMAZON_SP_API_CLIENT_ID
     
-    console.log(`[SP-API] Solicitando relatório para conta ${accountId} entre ${startDate} e ${endDate}`)
-    
-    // Simulação de resposta da API para fins de estrutura
-    // Na implementação real, usaríamos axios/fetch com retry exponencial (p-retry)
+    // Se não houver credenciais, geramos dados simulados para teste do dashboard
+    if (!clientId || clientId.includes('xxx')) {
+      console.log(`[SP-API] Credenciais ausentes. Gerando dados simulados para ${accountId}...`)
+      return this.generateMockData(startDate, endDate)
+    }
+
+    // TODO: Implementação real da chamada via fetch/axios para a Amazon
+    console.log(`[SP-API] Chamada real para conta ${accountId} entre ${startDate} e ${endDate}`)
     return [] 
   },
 
-  /**
-   * Helper para retry exponencial em caso de 429 (Rate Limit)
-   */
-  async withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
-    try {
-      return await fn()
-    } catch (error: any) {
-      if (retries > 0 && error?.status === 429) {
-        const delay = Math.pow(2, 3 - retries) * 1000
-        await new Promise(resolve => setTimeout(resolve, delay))
-        return this.withRetry(fn, retries - 1)
+  generateMockData(startStr: string, endStr: string): SpApiSalesRecord[] {
+    const start = new Date(startStr)
+    const end = new Date(endStr)
+    const records: SpApiSalesRecord[] = []
+    
+    // SKUs fixos para teste
+    const skus = ['AMZ-PROD-001', 'AMZ-PROD-002']
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0]
+      
+      for (const sku of skus) {
+        records.push({
+          date: dateStr,
+          sku: sku,
+          ordersCount: Math.floor(Math.random() * 10) + 1,
+          unitsSold: Math.floor(Math.random() * 15) + 1,
+          grossSales: Math.floor(Math.random() * 500) + 50
+        })
       }
-      throw error
     }
+    return records
   }
 }
