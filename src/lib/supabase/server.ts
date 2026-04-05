@@ -8,9 +8,7 @@ export async function createClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !key) {
-    // Retornamos null ou tratamos o erro de forma que não derrube o processo global
-    console.error('Supabase keys are missing from environment variables.')
-    throw new Error('Supabase configuration is incomplete.')
+    throw new Error('Supabase configuration is missing.')
   }
 
   return createServerClient(url, key, {
