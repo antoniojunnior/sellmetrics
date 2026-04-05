@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Configuração standalone necessária para o adaptador do Cloudflare
-  output: "standalone",
+  // Removido output: "standalone" para testar compatibilidade com OpenNext
   
   eslint: {
     ignoreDuringBuilds: true,
