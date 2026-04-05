@@ -5,5 +5,5 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 # As chaves NEXT_PUBLIC_ devem ser preenchidas aqui ou no painel Cloudflare
-# NEXT_PUBLIC_SUPABASE_URL = "https://rclbvbekhtqpxqogsovj.supabase.co"
-# NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjbGJ2YmVraHRxcHhxb2dzb3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMzA1NTksImV4cCI6MjA5MDkwNjU1OX0.Ci-v4-9PZrJODKg5rT_I7bzXtyhmkTxgqkPu8OB7POc"
+NEXT_PUBLIC_SUPABASE_URL = "https://rclbvbekhtqpxqogsovj.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjbGJ2YmVraHRxcHhxb2dzb3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMzA1NTksImV4cCI6MjA5MDkwNjU1OX0.Ci-v4-9PZrJODKg5rT_I7bzXtyhmkTxgqkPu8OB7POc"
