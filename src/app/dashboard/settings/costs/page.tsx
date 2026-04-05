@@ -1,3 +1,4 @@
+export const runtime = "edge";
 import { saveSkuCost } from '../actions'
 import { skuCostRepository } from '@/lib/supabase/repositories/sku-cost-repository'
 import { SkuCostParameters } from '@/lib/supabase/types'

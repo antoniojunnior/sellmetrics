@@ -1,3 +1,4 @@
+export const runtime = "edge";
 import { saveManualInputs } from '../actions'
 import { createClient } from '@/lib/supabase/server'
 import { PeriodManualInputs } from '@/lib/supabase/types'

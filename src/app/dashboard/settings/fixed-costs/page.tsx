@@ -1,3 +1,4 @@
+export const runtime = "edge";
 import { saveFixedCosts } from '../actions'
 import { createClient } from '@/lib/supabase/server'
 import { FixedCostsMonthly } from '@/lib/supabase/types'

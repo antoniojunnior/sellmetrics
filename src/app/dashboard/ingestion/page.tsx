@@ -1,3 +1,4 @@
+export const runtime = "edge";
 import { createClient } from '@/lib/supabase/server'
 import { runIngestHistorical, runIngestYesterday } from './ingestion-actions'
 import { SectionBlock } from '@/components/ui/section-block'
