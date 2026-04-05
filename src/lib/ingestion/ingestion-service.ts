@@ -25,8 +25,8 @@ export const ingestionService = {
       
       console.log(`[Ingestion] Processando lote: ${sDate} até ${eDate}`)
       
-      // 1. Buscar e persistir vendas (SP-API)
-      const sales = await spApiClient.getSalesAndTrafficReport(accountId, sDate, eDate)
+      // 1. Buscar e persistir vendas (Abordagem via Pedidos API)
+      const sales = await spApiClient.getSalesDataByOrders(accountId, sDate, eDate)
       for (const record of sales) {
         await dailySalesRepository.upsertDailySalesSnapshot({
           account_id: accountId,
