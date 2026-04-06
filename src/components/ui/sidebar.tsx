@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -10,22 +10,23 @@ interface SidebarProps {
     label: string
     items: { name: string; href: string; icon: React.ReactNode }[]
   }[]
+  isCollapsed: boolean
+  onToggle: () => void
 }
 
-export function Sidebar({ userEmail, navGroups }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+export function Sidebar({ userEmail, navGroups, isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
 
   return (
     <aside 
       className={`bg-surface border-r border-border flex flex-col h-full fixed left-0 top-0 z-50 transition-all duration-300 ease-in-out ${
-        isCollapsed ? 'w-[72px]' : 'w-[240px]'
+        isCollapsed ? 'w-0 md:w-[72px] -ml-[72px] md:ml-0' : 'w-[240px]'
       }`}
     >
-      {/* Botão de Toggle */}
+      {/* Botão de Toggle (Desktop apenas) */}
       <button 
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-8 w-6 h-6 bg-surface border border-border rounded-full flex items-center justify-center shadow-sm text-text-muted hover:text-accent z-50"
+        onClick={onToggle}
+        className="hidden md:flex absolute -right-3 top-8 w-6 h-6 bg-surface border border-border rounded-full items-center justify-center shadow-sm text-text-muted hover:text-accent z-50"
       >
         <svg 
           className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} 
