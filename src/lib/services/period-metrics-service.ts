@@ -140,7 +140,7 @@ export const periodMetricsService = {
     const revenue_net = total_variable_cost !== null ? gross_sales - total_variable_cost : null
     const margin_contribution = (revenue_net !== null && gross_sales > 0) ? revenue_net / gross_sales : null
     const margin_post_ads = (revenue_net !== null && gross_sales > 0) ? (revenue_net - ads_spend) / gross_sales : null
-    const markup = (total_variable_cost !== null && total_variable_cost > 0) ? gross_sales / total_variable_cost : null
+    const markup = (cogs_total !== null && cogs_total > 0) ? gross_sales / cogs_total : null
 
     // BLOCO F — Custos fixos e lucro
     const fixed_costs_period = fixedCosts.total_fixed_period
