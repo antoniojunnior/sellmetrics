@@ -84,7 +84,7 @@ async function MetricsContent({ accountId, startDate, endDate, sku }: { accountI
               <WaterfallRow label="Prep Center" value={metrics.prep_total} type="cost" percentage={metrics.gross_sales ? (metrics.prep_total! / metrics.gross_sales) * 100 : 0} />
               <WaterfallRow label="Imposto" value={metrics.tax_total} type="cost" percentage={metrics.gross_sales ? (metrics.tax_total! / metrics.gross_sales) * 100 : 0} />
               <WaterfallRow label="Taxas Amazon" value={metrics.amazon_fee_total} type="cost" percentage={metrics.gross_sales ? (metrics.amazon_fee_total! / metrics.gross_sales) * 100 : 0} />
-              <WaterfallRow label="Cupons" value={metrics.coupon_cost_value} type="cost" percentage={metrics.gross_sales ? (metrics.coupon_cost_value / metrics.gross_sales) * 100 : 0} />
+              <WaterfallRow label="Cupons (Já abatido na Rec. Bruta)" value={metrics.coupon_cost_value} type="revenue" />
               <WaterfallRow type="separator" label="" value={0} />
               <WaterfallRow label="Receita Líquida" value={metrics.revenue_net} type="revenue" />
               <WaterfallRow label="Publicidade (ADS)" value={metrics.ads_spend} type="cost" percentage={metrics.gross_sales ? (metrics.ads_spend / metrics.gross_sales) * 100 : 0} />

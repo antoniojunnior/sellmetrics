@@ -130,9 +130,11 @@ export const periodMetricsService = {
     const coupon_redemption_rate = coupon_distributed > 0 ? coupon_redeemed / coupon_distributed : null
 
     // Totais de custos variáveis (arredondado)
+    // NOTA: coupon_cost_value NÃO é somado aqui para evitar bitributação/abatimento duplo, 
+    // pois a Receita Bruta da Amazon já é líquida de descontos de cupons.
     const total_variable_cost = has_missing_costs 
       ? null 
-      : Math.round((cogs_total + prep_total + tax_total + amazon_fee_total + coupon_cost_value) * 100) / 100
+      : Math.round((cogs_total + prep_total + tax_total + amazon_fee_total) * 100) / 100
 
     // BLOCO E — Receita e margens
     const revenue_net = total_variable_cost !== null ? gross_sales - total_variable_cost : null
