@@ -59,26 +59,18 @@ export const fixedCostsRepository = {
 
     data.forEach((monthData) => {
       const monthStart = new Date(monthData.year_month)
-      // Garante que o UTC não interfira no cálculo da data (usando o último dia do mês)
       const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0)
       
-      // Determina o intervalo de intersecção entre o mês e o período solicitado
-      const intersectStart = start > monthStart ? start : monthStart
-      const intersectEnd = end < monthEnd ? end : monthEnd
+      // Verifica se há qualquer intersecção entre o mês e o período
+      const hasIntersection = start <= monthEnd && end >= monthStart
       
-      if (intersectStart <= intersectEnd) {
-        const daysInMonth = monthEnd.getDate()
-        // Cálculo da diferença de dias (inclusivo)
-        const diffInMs = intersectEnd.getTime() - intersectStart.getTime()
-        const daysInIntersect = Math.ceil(diffInMs / (1000 * 60 * 60 * 24)) + 1
-        
-        const ratio = daysInIntersect / daysInMonth
-
-        totals.accounting_fees += Number(monthData.accounting_fees) * ratio
-        totals.rent += Number(monthData.rent) * ratio
-        totals.amazon_prime += Number(monthData.amazon_prime) * ratio
-        totals.other_fixed_costs += Number(monthData.other_fixed_costs) * ratio
-        totals.total_fixed_period += Number(monthData.total_fixed_month) * ratio
+      if (hasIntersection) {
+        // Regra alterada: Contabiliza o valor INTEGRAL do mês se houver intersecção
+        totals.accounting_fees += Number(monthData.accounting_fees)
+        totals.rent += Number(monthData.rent)
+        totals.amazon_prime += Number(monthData.amazon_prime)
+        totals.other_fixed_costs += Number(monthData.other_fixed_costs)
+        totals.total_fixed_period += Number(monthData.total_fixed_month)
       }
     })
 
