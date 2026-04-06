@@ -20,21 +20,24 @@ export const periodManualInputsRepository = {
     return result as PeriodManualInputs
   },
 
-  async getManualInputsByPeriod(accountId: string, startDate: string, endDate: string) {
+  /**
+   * Busca todos os inputs manuais que intersectam o período informado.
+   * Lógica de intersecção: (start_date <= input_end) AND (end_date >= input_start)
+   */
+  async getManualInputsByPeriod(accountId: string, startDate: string, endDate: string): Promise<PeriodManualInputs[]> {
     const supabase = await createClient()
     
     const { data, error } = await supabase
       .from('period_manual_inputs')
       .select('*')
       .eq('account_id', accountId)
-      .eq('period_start_date', startDate)
-      .eq('period_end_date', endDate)
-      .single()
+      .lte('period_start_date', endDate)
+      .gte('period_end_date', startDate)
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       throw new Error(`Failed to fetch manual inputs: ${error.message}`)
     }
 
-    return (data as PeriodManualInputs | null)
+    return (data as PeriodManualInputs[] || [])
   }
 }

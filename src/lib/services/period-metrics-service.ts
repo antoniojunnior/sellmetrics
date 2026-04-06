@@ -60,7 +60,7 @@ export const periodMetricsService = {
     sku?: string
   ): Promise<PeriodMetrics> {
     // 1. Coleta de dados em paralelo
-    const [salesSnapshots, adsSum, manualInputs, fixedCosts] = await Promise.all([
+    const [salesSnapshots, adsSum, manualInputsList, fixedCosts] = await Promise.all([
       dailySalesRepository.getSalesByPeriod(accountId, startDate, endDate, sku),
       dailyAdsRepository.getAdsSumByPeriod(accountId, startDate, endDate),
       periodManualInputsRepository.getManualInputsByPeriod(accountId, startDate, endDate),
@@ -89,7 +89,6 @@ export const periodMetricsService = {
     let amazon_fee_total = 0
     let has_missing_costs = false
 
-    // Cache local por SKU para evitar múltiplas buscas do mesmo SKU no mesmo período
     const skuCostsMap: Record<string, SkuCostParameters[]> = {}
 
     for (const sale of salesSnapshots) {
@@ -107,7 +106,6 @@ export const periodMetricsService = {
         skuCostsMap[skuKey] = regimes
       }
 
-      // Lookup em memória do regime válido para o dia do snapshot
       const costs = regimes.find(r => 
         r.valid_from <= sale.snapshot_date && 
         (r.valid_to === null || r.valid_to > sale.snapshot_date)
@@ -124,11 +122,11 @@ export const periodMetricsService = {
       amazon_fee_total += Math.round(sale.units_sold * Number(costs.amazon_fee_unit) * 100) / 100
     }
 
-    // BLOCO D — Cupons
-    const coupon_sales_value = manualInputs?.coupon_sales_value ? Number(manualInputs.coupon_sales_value) : 0
-    const coupon_cost_value = manualInputs?.coupon_cost_value ? Number(manualInputs.coupon_cost_value) : 0
-    const coupon_distributed = manualInputs?.coupon_distributed || 0
-    const coupon_redeemed = manualInputs?.coupon_redeemed || 0
+    // BLOCO D — Cupons (Soma de todos os inputs que intersectam o período)
+    const coupon_sales_value = manualInputsList.reduce((acc, curr) => acc + Number(curr.coupon_sales_value), 0)
+    const coupon_cost_value = manualInputsList.reduce((acc, curr) => acc + Number(curr.coupon_cost_value), 0)
+    const coupon_distributed = manualInputsList.reduce((acc, curr) => acc + curr.coupon_distributed, 0)
+    const coupon_redeemed = manualInputsList.reduce((acc, curr) => acc + curr.coupon_redeemed, 0)
     const coupon_redemption_rate = coupon_distributed > 0 ? coupon_redeemed / coupon_distributed : null
 
     // Totais de custos variáveis (arredondado)
