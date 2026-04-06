@@ -5,15 +5,35 @@ import { SkuCostParameters } from '@/lib/supabase/types'
 import { SectionBlock } from '@/components/ui/section-block'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { SubmitButton } from '../components/submit-button'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 
 export default async function SkuCostsPage() {
-  const accountId = 'default-account'
-  const marketplaceId = 'ATVPDKIKX0DER'
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) redirect('/login')
+
+  const accountId = user.id
+  const marketplaceId = 'ATVPDKIKX0DER' // Pode ser expandido futuramente
   const today = new Date('2026-04-04').toISOString().split('T')[0]
   
-  const skus = ['SKU-EXAMPLE-001']
+  // 1. Busca todos os SKUs únicos presentes nos pedidos (snapshots) para esta conta
+  const { data: snapshotSkus } = await supabase
+    .from('daily_sales_snapshot')
+    .select('sku')
+    .eq('account_id', accountId)
+
+  // Extrai SKUs únicos
+  const uniqueSkus = Array.from(new Set((snapshotSkus || []).map(s => s.sku)))
   
-  const skuData = await Promise.all(skus.map(async (sku) => {
+  // Se não houver nenhum SKU em snapshots, podemos mostrar um exemplo ou lista vazia
+  if (uniqueSkus.length === 0) {
+    uniqueSkus.push('SKU-EXEMPLO-001')
+  }
+  
+  // 2. Busca o histórico completo para cada SKU identificado
+  const skuData = await Promise.all(uniqueSkus.map(async (sku) => {
     const history = await skuCostRepository.getCostHistory(accountId, sku)
     return { sku, history }
   }))
@@ -60,13 +80,17 @@ export default async function SkuCostsPage() {
         </form>
       </SectionBlock>
 
-      {/* Listagem de SKUs */}
+      {/* Listagem de SKUs Identificados */}
       <div className="space-y-6">
+        <h2 className="text-sm font-bold text-text-secondary uppercase tracking-widest px-2">Produtos Identificados ({skuData.length})</h2>
         {skuData.map(({ sku, history }) => (
-          <div key={sku} className="border border-border rounded-xl overflow-hidden bg-surface">
+          <div key={sku} className="border border-border rounded-xl overflow-hidden bg-surface shadow-sm">
             <header className="px-4 py-3 border-b border-border bg-slate-50/50 flex justify-between items-center">
-              <h3 className="text-sm font-bold text-text-primary">SKU: {sku}</h3>
-              <span className="text-[10px] font-bold text-text-muted uppercase">{history.length} Registros</span>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                <h3 className="text-sm font-bold text-text-primary">SKU: {sku}</h3>
+              </div>
+              <span className="text-[10px] font-bold text-text-muted uppercase">{history.length} Regimes Históricos</span>
             </header>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-border">
@@ -81,15 +105,15 @@ export default async function SkuCostsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50 text-sm text-text-secondary">
-                  {history.map((row: SkuCostParameters) => {
-                    const isCurrent = !row.valid_to || (row.valid_from <= today && row.valid_to > today)
+                  {history.length > 0 ? history.map((row: SkuCostParameters) => {
+                    const isCurrent = !row.valid_to || (row.valid_from <= today && (row.valid_to > today || row.valid_to === null))
                     const isFuture = row.valid_from > today
                     return (
                       <tr key={row.id} className="hover:bg-background/30 transition-colors">
-                        <td className="px-4 py-3 font-mono font-bold text-text-primary">R$ {row.unit_cost.toFixed(2)}</td>
-                        <td className="px-4 py-3 font-mono text-xs">R$ {row.prep_cost_unit.toFixed(2)}</td>
-                        <td className="px-4 py-3 font-mono text-xs">{(row.tax_rate * 100).toFixed(1)}%</td>
-                        <td className="px-4 py-3 font-mono text-xs">R$ {row.amazon_fee_unit.toFixed(2)}</td>
+                        <td className="px-4 py-3 font-mono font-bold text-text-primary">R$ {Number(row.unit_cost).toFixed(2)}</td>
+                        <td className="px-4 py-3 font-mono text-xs">R$ {Number(row.prep_cost_unit).toFixed(2)}</td>
+                        <td className="px-4 py-3 font-mono text-xs">{(Number(row.tax_rate) * 100).toFixed(1)}%</td>
+                        <td className="px-4 py-3 font-mono text-xs">R$ {Number(row.amazon_fee_unit).toFixed(2)}</td>
                         <td className="px-4 py-3">
                           {isFuture ? <StatusBadge status="pending" label="Futuro" /> : isCurrent ? <StatusBadge status="ok" label="Vigente" /> : <StatusBadge status="pending" label="Encerrado" />}
                         </td>
@@ -98,7 +122,13 @@ export default async function SkuCostsPage() {
                         </td>
                       </tr>
                     )
-                  })}
+                  }) : (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-10 text-center text-xs text-text-muted italic bg-slate-50/10">
+                        Nenhum parâmetro de custo configurado. Use o formulário acima para este SKU.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

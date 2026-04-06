@@ -4,13 +4,18 @@ import { createClient } from '@/lib/supabase/server'
 import { PeriodManualInputs } from '@/lib/supabase/types'
 import { SectionBlock } from '@/components/ui/section-block'
 import { SubmitButton } from '../components/submit-button'
+import { redirect } from 'next/navigation'
 
 export default async function ManualInputsPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) redirect('/login')
+
   const { data: inputs } = await supabase
     .from('period_manual_inputs')
     .select('*')
-    .eq('account_id', 'default-account')
+    .eq('account_id', user.id)
     .order('period_start_date', { ascending: false })
 
   const formatMoney = (val: number) => `R$ ${val.toFixed(2)}`
@@ -20,7 +25,7 @@ export default async function ManualInputsPage() {
       {/* Formulário */}
       <SectionBlock title="Novo Lançamento por Período" className="border-dashed bg-background/30">
         <form action={saveManualInputs} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-8 gap-4 items-end">
-          <input type="hidden" name="account_id" value="default-account" />
+          <input type="hidden" name="account_id" value={user.id} />
           
           <div className="space-y-1 lg:col-span-2">
             <label className="text-[10px] font-black uppercase text-text-muted tracking-widest">Início</label>
