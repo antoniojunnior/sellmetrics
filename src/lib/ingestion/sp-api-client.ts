@@ -15,7 +15,6 @@ const REGION_ENDPOINTS: Record<string, string> = {
   'eu-west-1': 'https://sellingpartnerapi-eu.amazon.com',
 }
 
-// Marketplaces comuns para facilitar o teste
 const MARKETPLACE_IDS = [
   'A2Q3Y263D00KWC', // Brasil
   'ATVPDKIKX0DER', // USA
@@ -41,20 +40,21 @@ export const spApiClient = {
     accountId: string,
     startDate: string,
     endDate: string
-  ): Promise<SpApiSalesRecord[]> {
+  ): Promise<{ aggregated: SpApiSalesRecord[], rawItems: any[] }> {
     const clientId = process.env.AMAZON_SP_API_CLIENT_ID
     const region = process.env.AMAZON_SP_API_REGION || 'us-east-1'
     const endpoint = REGION_ENDPOINTS[region] || REGION_ENDPOINTS['us-east-1']
 
     if (!clientId || clientId.includes('xxx')) {
-      return this.generateMockData(startDate, endDate)
+      const mock = this.generateMockData(startDate, endDate)
+      return { aggregated: mock, rawItems: [] }
     }
 
     try {
       const accessToken = await this.getAccessToken()
       const aggregationMap: Record<string, Record<string, any>> = {}
+      const rawItemsList: any[] = []
 
-      // Iteramos pelos marketplaces conhecidos para garantir captura
       for (const mktId of MARKETPLACE_IDS) {
         console.log(`[SP-API Orders] Buscando pedidos no Marketplace: ${mktId}`)
         
@@ -62,7 +62,6 @@ export const spApiClient = {
           CreatedAfter: `${startDate}T00:00:00Z`,
           CreatedBefore: `${endDate}T23:59:59Z`,
           MarketplaceIds: mktId,
-          // Incluído 'Pending' para capturar vendas em tempo real
           OrderStatuses: 'Pending,Unshipped,PartiallyShipped,Shipped,InvoiceUnconfirmed'
         })
 
@@ -71,8 +70,6 @@ export const spApiClient = {
         })
         const ordersData = await ordersResponse.json() as any
         const orders = ordersData.payload?.Orders || []
-
-        console.log(`[SP-API Orders] Encontrados ${orders.length} pedidos em ${mktId}`)
 
         for (const order of orders) {
           const dateStr = order.PurchaseDate.split('T')[0]
@@ -88,10 +85,21 @@ export const spApiClient = {
 
           for (const item of items) {
             const sku = item.SellerSKU || 'SKU-DESCONHECIDO'
+            
+            rawItemsList.push({
+              account_id: accountId,
+              marketplace_id: mktId,
+              amazon_order_id: order.AmazonOrderId,
+              purchase_date: order.PurchaseDate,
+              sku: sku,
+              quantity: item.QuantityOrdered || 0,
+              item_price: Number(item.ItemPrice?.Amount || 0),
+              order_status: order.OrderStatus
+            })
+
             if (!aggregationMap[dateStr][sku]) {
               aggregationMap[dateStr][sku] = { units: 0, sales: 0, orders: 0, orderIds: new Set() }
             }
-
             aggregationMap[dateStr][sku].units += (item.QuantityOrdered || 0)
             aggregationMap[dateStr][sku].sales += Number(item.ItemPrice?.Amount || 0)
             aggregationMap[dateStr][sku].orderIds.add(order.AmazonOrderId)
@@ -100,11 +108,11 @@ export const spApiClient = {
         }
       }
 
-      const results: SpApiSalesRecord[] = []
+      const aggregatedResults: SpApiSalesRecord[] = []
       Object.keys(aggregationMap).forEach(date => {
         Object.keys(aggregationMap[date]).forEach(sku => {
           const agg = aggregationMap[date][sku]
-          results.push({
+          aggregatedResults.push({
             date,
             sku,
             unitsSold: agg.units,
@@ -114,7 +122,7 @@ export const spApiClient = {
         })
       })
 
-      return results
+      return { aggregated: aggregatedResults, rawItems: rawItemsList }
     } catch (e: any) {
       console.error(`[SP-API Orders] Erro Fatal: ${e.message}`)
       throw e

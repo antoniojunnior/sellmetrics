@@ -1,5 +1,6 @@
 import { dailyAdsRepository } from '../supabase/repositories/daily-ads-repository'
 import { dailySalesRepository } from '../supabase/repositories/daily-sales-repository'
+import { ordersRepository } from '../supabase/repositories/orders-repository'
 import { adsApiClient } from './ads-api-client'
 import { spApiClient } from './sp-api-client'
 
@@ -25,9 +26,16 @@ export const ingestionService = {
       
       console.log(`[Ingestion] Processando lote: ${sDate} até ${eDate}`)
       
-      // 1. Buscar e persistir vendas (Abordagem via Pedidos API)
-      const sales = await spApiClient.getSalesDataByOrders(accountId, sDate, eDate)
-      for (const record of sales) {
+      // 1. Buscar vendas (Abordagem via Pedidos API)
+      const { aggregated, rawItems } = await spApiClient.getSalesDataByOrders(accountId, sDate, eDate)
+      
+      // Persistir Pedidos Individuais (Auditoria)
+      if (rawItems.length > 0) {
+        await ordersRepository.upsertOrderItems(rawItems)
+      }
+
+      // Persistir Snapshots Agregados (Estatística)
+      for (const record of aggregated) {
         await dailySalesRepository.upsertDailySalesSnapshot({
           account_id: accountId,
           marketplace_id: marketplaceId,
