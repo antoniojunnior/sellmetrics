@@ -26,6 +26,27 @@ export const dailySalesRepository = {
     return result as DailySalesSnapshot
   },
 
+  async deleteSalesByPeriod(accountId: string, startDate: string, endDate: string, sku?: string): Promise<void> {
+    const supabase = await createClient()
+    
+    let query = supabase
+      .from('daily_sales_snapshot')
+      .delete()
+      .eq('account_id', accountId)
+      .gte('snapshot_date', startDate)
+      .lte('snapshot_date', endDate)
+
+    if (sku) {
+      query = query.eq('sku', sku)
+    }
+
+    const { error } = await query
+
+    if (error) {
+      throw new Error(`Failed to delete sales snapshots: ${error.message}`)
+    }
+  },
+
   async getSalesByPeriod(accountId: string, startDate: string, endDate: string, sku?: string): Promise<DailySalesSnapshot[]> {
     const supabase = await createClient()
     

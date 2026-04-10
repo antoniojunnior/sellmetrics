@@ -30,11 +30,15 @@ export const ingestionService = {
       const { aggregated, rawItems } = await spApiClient.getSalesDataByOrders(accountId, sDate, eDate)
       
       // Persistir Pedidos Individuais (Auditoria)
+      // O upsert aqui já trata a atualização dos status (ex: de Unshipped para Shipped)
       if (rawItems.length > 0) {
         await ordersRepository.upsertOrderItems(rawItems)
       }
 
-      // Persistir Snapshots Agregados (Estatística)
+      // Limpar e Persistir Snapshots Agregados (Estatística)
+      // Limpamos o período do lote para garantir que KPIs sejam recalculados do zero
+      await dailySalesRepository.deleteSalesByPeriod(accountId, sDate, eDate)
+
       for (const record of aggregated) {
         await dailySalesRepository.upsertDailySalesSnapshot({
           account_id: accountId,
