@@ -82,20 +82,23 @@ export const spApiClient = {
           const items = itemsData.payload?.OrderItems || []
 
           if (!aggregationMap[dateStr]) aggregationMap[dateStr] = {}
+for (const item of items) {
+  const sku = item.SellerSKU || 'SKU-DESCONHECIDO'
+  const price = Number(item.ItemPrice?.Amount || 0)
 
-          for (const item of items) {
-            const sku = item.SellerSKU || 'SKU-DESCONHECIDO'
-            
-            rawItemsList.push({
-              account_id: accountId,
-              marketplace_id: mktId,
-              amazon_order_id: order.AmazonOrderId,
-              purchase_date: order.PurchaseDate,
-              sku: sku,
-              quantity: item.QuantityOrdered || 0,
-              item_price: Number(item.ItemPrice?.Amount || 0),
-              order_status: order.OrderStatus
-            })
+  console.log(`[SP-API Orders] Processando Item: SKU=${sku}, Preço=${price}, Status=${order.OrderStatus}`)
+
+  rawItemsList.push({
+    account_id: accountId,
+    marketplace_id: mktId,
+    amazon_order_id: order.AmazonOrderId,
+    purchase_date: order.PurchaseDate,
+    sku: sku,
+    quantity: item.QuantityOrdered || 0,
+    item_price: price,
+    order_status: order.OrderStatus
+  })
+
 
             if (!aggregationMap[dateStr][sku]) {
               aggregationMap[dateStr][sku] = { units: 0, sales: 0, orders: 0, orderIds: new Set() }

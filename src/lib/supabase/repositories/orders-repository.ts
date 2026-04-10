@@ -17,9 +17,16 @@ export const ordersRepository = {
     if (items.length === 0) return
     
     const supabase = await createClient()
+    
+    // Adicionamos updated_at manualmente para garantir que o banco registre a mudança
+    const itemsToUpsert = items.map(item => ({
+      ...item,
+      updated_at: new Date().toISOString()
+    }))
+
     const { error } = await supabase
       .from('amazon_orders')
-      .upsert(items, {
+      .upsert(itemsToUpsert, {
         onConflict: 'account_id, amazon_order_id, sku'
       })
 
