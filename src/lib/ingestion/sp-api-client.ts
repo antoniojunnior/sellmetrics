@@ -46,8 +46,7 @@ export const spApiClient = {
     const endpoint = REGION_ENDPOINTS[region] || REGION_ENDPOINTS['us-east-1']
 
     if (!clientId || clientId.includes('xxx')) {
-      const mock = this.generateMockData(startDate, endDate)
-      return { aggregated: mock, rawItems: [] }
+      return { aggregated: this.generateMockData(startDate, endDate), rawItems: [] }
     }
 
     try {
@@ -56,66 +55,89 @@ export const spApiClient = {
       const rawItemsList: any[] = []
 
       for (const mktId of MARKETPLACE_IDS) {
-        console.log(`[SP-API Orders] Buscando pedidos no Marketplace: ${mktId}`)
+        let nextToken: string | null = null
         
-        const ordersUrl = `${endpoint}/orders/v0/orders?` + new URLSearchParams({
-          CreatedAfter: `${startDate}T00:00:00Z`,
-          CreatedBefore: `${endDate}T23:59:59Z`,
-          MarketplaceIds: mktId,
-          OrderStatuses: 'Pending,Unshipped,PartiallyShipped,Shipped,InvoiceUnconfirmed'
-        })
+        do {
+          const params: Record<string, string> = {
+            MarketplaceIds: mktId,
+            OrderStatuses: 'Pending,Unshipped,PartiallyShipped,Shipped,InvoiceUnconfirmed'
+          }
 
-        const ordersResponse = await fetch(ordersUrl, {
-          headers: { 'x-amz-access-token': accessToken }
-        })
-        const ordersData = await ordersResponse.json() as any
-        const orders = ordersData.payload?.Orders || []
+          if (nextToken) {
+            params.NextToken = nextToken
+          } else {
+            params.CreatedAfter = `${startDate}T00:00:00Z`
+            params.CreatedBefore = `${endDate}T23:59:59Z`
+          }
 
-        for (const order of orders) {
-          const dateStr = order.PurchaseDate.split('T')[0]
-          
-          const itemsUrl = `${endpoint}/orders/v0/orders/${order.AmazonOrderId}/orderItems`
-          const itemsResponse = await fetch(itemsUrl, {
+          const ordersUrl = `${endpoint}/orders/v0/orders?` + new URLSearchParams(params)
+          const ordersResponse = await fetch(ordersUrl, {
             headers: { 'x-amz-access-token': accessToken }
           })
-          const itemsData = await itemsResponse.json() as any
-          const items = itemsData.payload?.OrderItems || []
-
-          if (!aggregationMap[dateStr]) aggregationMap[dateStr] = {}
-for (const item of items) {
-  const sku = item.SellerSKU || 'SKU-DESCONHECIDO'
-  const price = Number(item.ItemPrice?.Amount || 0)
-
-  console.log(`[SP-API Orders] Processando Item: SKU=${sku}, Preço=${price}, Status=${order.OrderStatus}`)
-
-  rawItemsList.push({
-    account_id: accountId,
-    marketplace_id: mktId,
-    amazon_order_id: order.AmazonOrderId,
-    purchase_date: order.PurchaseDate,
-    sku: sku,
-    quantity: item.QuantityOrdered || 0,
-    item_price: price,
-    order_status: order.OrderStatus
-  })
-
-
-            if (!aggregationMap[dateStr][sku]) {
-              aggregationMap[dateStr][sku] = { units: 0, sales: 0, orders: 0, orderIds: new Set() }
-            }
-            aggregationMap[dateStr][sku].units += (item.QuantityOrdered || 0)
-            aggregationMap[dateStr][sku].sales += Number(item.ItemPrice?.Amount || 0)
-            aggregationMap[dateStr][sku].orderIds.add(order.AmazonOrderId)
+          
+          if (!ordersResponse.ok) {
+            const errorText = await ordersResponse.text()
+            console.error(`[SP-API Orders] Erro na API de Pedidos (${mktId}):`, errorText)
+            break
           }
-          await new Promise(r => setTimeout(r, 500)) 
-        }
+
+          const ordersData = await ordersResponse.json() as any
+          const orders = ordersData.payload?.Orders || []
+          nextToken = ordersData.payload?.NextToken || null
+
+          console.log(`[SP-API Orders] Processando ${orders.length} pedidos da página no Marketplace ${mktId}`)
+
+          for (const order of orders) {
+            const dateStr = order.PurchaseDate.split('T')[0]
+            
+            // Busca itens do pedido
+            const itemsUrl = `${endpoint}/orders/v0/orders/${order.AmazonOrderId}/orderItems`
+            const itemsResponse = await fetch(itemsUrl, {
+              headers: { 'x-amz-access-token': accessToken }
+            })
+            
+            if (!itemsResponse.ok) continue
+
+            const itemsData = await itemsResponse.json() as any
+            const items = itemsData.payload?.OrderItems || []
+
+            if (!aggregationMap[dateStr]) aggregationMap[dateStr] = {}
+
+            for (const item of items) {
+              const sku = item.SellerSKU || 'SKU-DESCONHECIDO'
+              const price = Number(item.ItemPrice?.Amount || 0)
+              const qty = item.QuantityOrdered || 0
+
+              rawItemsList.push({
+                account_id: accountId,
+                marketplace_id: mktId,
+                amazon_order_id: order.AmazonOrderId,
+                purchase_date: order.PurchaseDate,
+                sku: sku,
+                quantity: qty,
+                item_price: price,
+                order_status: order.OrderStatus
+              })
+
+              if (!aggregationMap[dateStr][sku]) {
+                aggregationMap[dateStr][sku] = { units: 0, sales: 0, orders: 0, orderIds: new Set() }
+              }
+              aggregationMap[dateStr][sku].units += qty
+              aggregationMap[dateStr][sku].sales += price
+              aggregationMap[dateStr][sku].orderIds.add(order.AmazonOrderId)
+            }
+            
+            // Respeita Rate Limit: 0.5s por pedido
+            await new Promise(r => setTimeout(r, 500))
+          }
+        } while (nextToken)
       }
 
-      const aggregatedResults: SpApiSalesRecord[] = []
+      const results: SpApiSalesRecord[] = []
       Object.keys(aggregationMap).forEach(date => {
         Object.keys(aggregationMap[date]).forEach(sku => {
           const agg = aggregationMap[date][sku]
-          aggregatedResults.push({
+          results.push({
             date,
             sku,
             unitsSold: agg.units,
@@ -125,9 +147,9 @@ for (const item of items) {
         })
       })
 
-      return { aggregated: aggregatedResults, rawItems: rawItemsList }
+      return { aggregated: results, rawItems: rawItemsList }
     } catch (e: any) {
-      console.error(`[SP-API Orders] Erro Fatal: ${e.message}`)
+      console.error(`[SP-API Orders] Erro Fatal Ingestão: ${e.message}`)
       throw e
     }
   },
