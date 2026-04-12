@@ -52,11 +52,15 @@ export async function runIngestHistorical(formData: FormData): Promise<void> {
       days_processed: diff
     })
   } catch (e: any) {
+    const errorMessage = e.message || 'Erro desconhecido na ingestão'
+    console.error('Ingestion Action Error:', errorMessage)
+    
     await supabase.from('ingestion_logs').insert({
       account_id: accountId,
       type: 'historical',
       status: 'error',
-      error_message: e.message
+      days_processed: 0,
+      error_message: errorMessage
     })
   }
 
