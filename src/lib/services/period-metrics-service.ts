@@ -11,6 +11,8 @@ export interface PeriodMetrics {
   gross_sales: number
   units_sold: number
   orders_count: number
+  canceled_count: number
+  canceled_sales: number
 
   // BLOCO B — ADS
   ads_spend: number
@@ -75,6 +77,8 @@ export const periodMetricsService = {
     const gross_sales = salesSnapshots.reduce((acc, s) => acc + Number(s.gross_sales), 0)
     const units_sold = salesSnapshots.reduce((acc, s) => acc + s.units_sold, 0)
     const orders_count = salesSnapshots.reduce((acc, s) => acc + s.orders_count, 0)
+    const canceled_count = salesSnapshots.reduce((acc, s) => acc + (s.canceled_count || 0), 0)
+    const canceled_sales = salesSnapshots.reduce((acc, s) => acc + Number(s.canceled_sales || 0), 0)
 
     // BLOCO B — ADS
     const { ads_spend, ads_sales, ads_clicks, ads_orders } = adsSum
@@ -82,7 +86,7 @@ export const periodMetricsService = {
     const tacos = gross_sales > 0 ? ads_spend / gross_sales : null
     const ads_conversion = ads_clicks > 0 ? ads_orders / ads_clicks : null
 
-    // BLOCO C — Custos variáveis (Cálculo SCD2 dia a dia)
+    // BLOCO C — Custos variáveis
     let cogs_total = 0
     let prep_total = 0
     let tax_total = 0
@@ -122,22 +126,22 @@ export const periodMetricsService = {
       amazon_fee_total += Math.round(sale.units_sold * Number(costs.amazon_fee_unit) * 100) / 100
     }
 
-    // BLOCO D — Cupons (Soma de todos os inputs que intersectam o período)
     const coupon_sales_value = manualInputsList.reduce((acc, curr) => acc + Number(curr.coupon_sales_value), 0)
     const coupon_cost_value = manualInputsList.reduce((acc, curr) => acc + Number(curr.coupon_cost_value), 0)
     const coupon_distributed = manualInputsList.reduce((acc, curr) => acc + curr.coupon_distributed, 0)
     const coupon_redeemed = manualInputsList.reduce((acc, curr) => acc + curr.coupon_redeemed, 0)
     const coupon_redemption_rate = coupon_distributed > 0 ? coupon_redeemed / coupon_distributed : null
 
-    // Totais de custos variáveis (arredondado)
-    // NOTA: coupon_cost_value NÃO é somado aqui para evitar bitributação/abatimento duplo, 
-    // pois a Receita Bruta da Amazon já é líquida de descontos de cupons.
     const total_variable_cost = has_missing_costs 
       ? null 
       : Math.round((cogs_total + prep_total + tax_total + amazon_fee_total) * 100) / 100
 
     // BLOCO E — Receita e margens
-    const revenue_net = total_variable_cost !== null ? gross_sales - total_variable_cost : null
+    // A Receita Líquida Real subtrai os cancelamentos da Receita Bruta
+    const revenue_net = total_variable_cost !== null 
+      ? (gross_sales - canceled_sales) - total_variable_cost 
+      : null
+      
     const margin_contribution = (revenue_net !== null && gross_sales > 0) ? revenue_net / gross_sales : null
     const margin_post_ads = (revenue_net !== null && gross_sales > 0) ? (revenue_net - ads_spend) / gross_sales : null
     const markup = (cogs_total !== null && cogs_total > 0) ? gross_sales / cogs_total : null
@@ -157,6 +161,8 @@ export const periodMetricsService = {
       gross_sales,
       units_sold,
       orders_count,
+      canceled_count,
+      canceled_sales,
       ads_spend,
       ads_sales,
       ads_clicks,

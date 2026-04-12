@@ -7,6 +7,8 @@ export interface DailySalesSnapshot {
   orders_count: number
   units_sold: number
   gross_sales: number
+  canceled_count: number
+  canceled_sales: number
   created_at: string
   updated_at: string
 }

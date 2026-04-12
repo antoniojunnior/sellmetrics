@@ -1,4 +1,3 @@
-export const runtime = "edge";
 import { Suspense } from 'react'
 import { periodMetricsService } from '@/lib/services/period-metrics-service'
 import { createClient } from '@/lib/supabase/server'
@@ -47,30 +46,30 @@ export default async function PeriodDashboardPage({
       </div>
 
       <Suspense fallback={<DashboardLoadingSkeleton />}>
-        <MetricsContent accountId={user.id} startDate={startDate} endDate={endDate} sku={sku} />
+        <OrdersContent accountId={user.id} startDate={startDate} endDate={endDate} sku={sku} />
       </Suspense>
     </div>
   )
 }
 
-async function MetricsContent({ accountId, startDate, endDate, sku }: { accountId: string, startDate: string, endDate: string, sku: string }) {
+async function OrdersContent({ accountId, startDate, endDate, sku }: { accountId: string, startDate: string, endDate: string, sku: string }) {
   const metrics = await periodMetricsService.calculateMetrics(accountId, startDate, endDate, sku || undefined)
 
   return (
     <div className="space-y-8">
       {/* LINHA 1 — KPIs Principais */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard label="Receita Bruta" value={metrics.gross_sales.toFixed(2)} unit="R$" highlight trend="up" trendValue="12.5%" />
-        <MetricCard label="Receita Líquida" value={metrics.revenue_net?.toFixed(2) || null} unit="R$" highlight trend="up" trendValue="8.2%" />
-        <MetricCard label="Lucro do Período" value={metrics.profit_period?.toFixed(2) || null} unit="R$" highlight trend="down" trendValue="2.1%" />
+        <MetricCard label="Receita Bruta" value={metrics.gross_sales.toFixed(2)} unit="R$" highlight />
+        <MetricCard label="Receita Líquida" value={metrics.revenue_net?.toFixed(2) || null} unit="R$" highlight />
+        <MetricCard label="Lucro do Período" value={metrics.profit_period?.toFixed(2) || null} unit="R$" highlight />
         <MetricCard label="Margem pós ADS" value={metrics.margin_post_ads !== null ? (metrics.margin_post_ads * 100).toFixed(1) : null} unit="%" highlight />
       </div>
 
       {/* LINHA 2 — KPIs Secundários */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <MetricCard label="Cancelamentos (R$)" value={metrics.canceled_sales.toFixed(2)} unit="R$" trend={metrics.canceled_count > 0 ? "down" : "neutral"} trendValue={metrics.canceled_count.toString()} />
         <MetricCard label="ACOS" value={metrics.acos ? (metrics.acos * 100).toFixed(1) : null} unit="%" />
         <MetricCard label="TACOS" value={metrics.tacos ? (metrics.tacos * 100).toFixed(1) : null} unit="%" />
-        <MetricCard label="Faturamento/Dia" value={metrics.revenue_per_day.toFixed(2)} unit="R$" />
         <MetricCard label="Líquido/Dia" value={metrics.net_per_day?.toFixed(2) || null} unit="R$" />
       </div>
 
@@ -80,15 +79,17 @@ async function MetricsContent({ accountId, startDate, endDate, sku }: { accountI
           <SectionBlock title="Custos & Margens" subtitle="Construção do resultado operacional">
             <div className="space-y-1">
               <WaterfallRow label="Receita Bruta" value={metrics.gross_sales} type="revenue" percentage={100} />
+              <WaterfallRow label="(-) Cancelamentos" value={metrics.canceled_sales} type="cost" percentage={metrics.gross_sales ? (metrics.canceled_sales / metrics.gross_sales) * 100 : 0} />
+              <WaterfallRow type="separator" label="" value={0} />
               <WaterfallRow label="COGS (Investimento Vendido)" value={metrics.cogs_total} type="cost" percentage={metrics.gross_sales ? (metrics.cogs_total! / metrics.gross_sales) * 100 : 0} />
               <WaterfallRow label="Prep Center" value={metrics.prep_total} type="cost" percentage={metrics.gross_sales ? (metrics.prep_total! / metrics.gross_sales) * 100 : 0} />
               <WaterfallRow label="Imposto" value={metrics.tax_total} type="cost" percentage={metrics.gross_sales ? (metrics.tax_total! / metrics.gross_sales) * 100 : 0} />
               <WaterfallRow label="Taxas Amazon" value={metrics.amazon_fee_total} type="cost" percentage={metrics.gross_sales ? (metrics.amazon_fee_total! / metrics.gross_sales) * 100 : 0} />
               <WaterfallRow label="Cupons (Já abatido na Rec. Bruta)" value={metrics.coupon_cost_value} type="revenue" />
               <WaterfallRow type="separator" label="" value={0} />
-              <WaterfallRow label="Receita Líquida" value={metrics.revenue_net} type="revenue" />
+              <WaterfallRow label="Receita Líquida Real" value={metrics.revenue_net} type="revenue" />
               <WaterfallRow label="Publicidade (ADS)" value={metrics.ads_spend} type="cost" percentage={metrics.gross_sales ? (metrics.ads_spend / metrics.gross_sales) * 100 : 0} />
-              <WaterfallRow label="Custos Fixos (Proporcional)" value={metrics.fixed_costs_period} type="cost" />
+              <WaterfallRow label="Custos Fixos (Mês Integral)" value={metrics.fixed_costs_period} type="cost" />
               <WaterfallRow type="separator" label="" value={0} />
               <WaterfallRow label="LUCRO DO PERÍODO" value={metrics.profit_period} type="result" />
             </div>
@@ -126,7 +127,7 @@ async function MetricsContent({ accountId, startDate, endDate, sku }: { accountI
           <div className="space-y-4">
             <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Unidades</span><span className="font-bold text-text-primary">{metrics.units_sold}</span></div>
             <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Pedidos</span><span className="font-bold text-text-primary">{metrics.orders_count}</span></div>
-            <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Ticket Médio</span><span className="font-bold text-text-primary">{formatCurrency(metrics.gross_sales / (metrics.orders_count || 1))}</span></div>
+            <div className="flex justify-between items-center text-negative"><span className="text-sm">Cancelados</span><span className="font-bold">{metrics.canceled_count}</span></div>
           </div>
         </SectionBlock>
 

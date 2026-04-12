@@ -47,7 +47,9 @@ export const ingestionService = {
           snapshot_date: record.date,
           orders_count: record.ordersCount,
           units_sold: record.unitsSold,
-          gross_sales: record.grossSales
+          gross_sales: record.grossSales,
+          canceled_count: record.canceled_count,
+          canceled_sales: record.canceled_sales
         })
       }
       

@@ -8,6 +8,8 @@ export interface SpApiSalesRecord {
   ordersCount: number
   unitsSold: number
   grossSales: number
+  canceled_count: number
+  canceled_sales: number
 }
 
 const REGION_ENDPOINTS: Record<string, string> = {
@@ -60,7 +62,7 @@ export const spApiClient = {
         do {
           const params: Record<string, string> = {
             MarketplaceIds: mktId,
-            OrderStatuses: 'Pending,Unshipped,PartiallyShipped,Shipped,InvoiceUnconfirmed'
+            OrderStatuses: 'Pending,Unshipped,PartiallyShipped,Shipped,InvoiceUnconfirmed,Canceled'
           }
 
           if (nextToken) {
@@ -85,12 +87,10 @@ export const spApiClient = {
           const orders = ordersData.payload?.Orders || []
           nextToken = ordersData.payload?.NextToken || null
 
-          console.log(`[SP-API Orders] Processando ${orders.length} pedidos da página no Marketplace ${mktId}`)
-
           for (const order of orders) {
             const dateStr = order.PurchaseDate.split('T')[0]
+            const isCanceled = order.OrderStatus === 'Canceled'
             
-            // Busca itens do pedido
             const itemsUrl = `${endpoint}/orders/v0/orders/${order.AmazonOrderId}/orderItems`
             const itemsResponse = await fetch(itemsUrl, {
               headers: { 'x-amz-access-token': accessToken }
@@ -109,7 +109,7 @@ export const spApiClient = {
               const qty = item.QuantityOrdered || 0
 
               rawItemsList.push({
-                account_id: accountId,
+                account_id: account_id,
                 marketplace_id: mktId,
                 amazon_order_id: order.AmazonOrderId,
                 purchase_date: order.PurchaseDate,
@@ -120,14 +120,18 @@ export const spApiClient = {
               })
 
               if (!aggregationMap[dateStr][sku]) {
-                aggregationMap[dateStr][sku] = { units: 0, sales: 0, orders: 0, orderIds: new Set() }
+                aggregationMap[dateStr][sku] = { units: 0, sales: 0, orders: new Set(), canceled_count: 0, canceled_sales: 0 }
               }
-              aggregationMap[dateStr][sku].units += qty
-              aggregationMap[dateStr][sku].sales += price
-              aggregationMap[dateStr][sku].orderIds.add(order.AmazonOrderId)
+
+              if (isCanceled) {
+                aggregationMap[dateStr][sku].canceled_count += 1
+                aggregationMap[dateStr][sku].canceled_sales += price
+              } else {
+                aggregationMap[dateStr][sku].units += qty
+                aggregationMap[dateStr][sku].sales += price
+                aggregationMap[dateStr][sku].orders.add(order.AmazonOrderId)
+              }
             }
-            
-            // Respeita Rate Limit: 0.5s por pedido
             await new Promise(r => setTimeout(r, 500))
           }
         } while (nextToken)
@@ -142,7 +146,9 @@ export const spApiClient = {
             sku,
             unitsSold: agg.units,
             grossSales: agg.sales,
-            ordersCount: agg.orderIds.size
+            ordersCount: agg.orders.size,
+            canceled_count: agg.canceled_count,
+            canceled_sales: agg.canceled_sales
           })
         })
       })
@@ -167,7 +173,9 @@ export const spApiClient = {
           sku: sku,
           ordersCount: Math.floor(Math.random() * 5) + 1,
           unitsSold: Math.floor(Math.random() * 8) + 1,
-          grossSales: Math.floor(Math.random() * 300) + 100
+          grossSales: Math.floor(Math.random() * 300) + 100,
+          canceled_count: Math.random() > 0.8 ? 1 : 0,
+          canceled_sales: Math.random() > 0.8 ? 50 : 0
         })
       }
     }
