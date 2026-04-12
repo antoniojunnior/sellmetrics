@@ -1,3 +1,4 @@
+export const runtime = 'edge'
 import { Suspense } from 'react'
 import { periodMetricsService } from '@/lib/services/period-metrics-service'
 import { createClient } from '@/lib/supabase/server'
