@@ -109,7 +109,7 @@ export const spApiClient = {
               const qty = item.QuantityOrdered || 0
 
               rawItemsList.push({
-                account_id: account_id,
+                account_id: accountId,
                 marketplace_id: mktId,
                 amazon_order_id: order.AmazonOrderId,
                 purchase_date: order.PurchaseDate,
