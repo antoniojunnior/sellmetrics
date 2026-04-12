@@ -11,16 +11,24 @@ export const dailySalesRepository = {
   async upsertDailySalesSnapshot(data: Omit<DailySalesSnapshot, 'id' | 'created_at' | 'updated_at'>): Promise<DailySalesSnapshot> {
     const supabase = await createClient()
     
+    // Forçamos o updated_at para garantir que o banco registre a atualização
+    const dataWithTimestamp = {
+      ...data,
+      updated_at: new Date().toISOString()
+    }
+
     const { data: result, error } = await supabase
       .from('daily_sales_snapshot')
-      .upsert(data, {
-        onConflict: 'account_id, marketplace_id, sku, snapshot_date'
+      .upsert(dataWithTimestamp, {
+        onConflict: 'account_id, marketplace_id, sku, snapshot_date',
+        ignoreDuplicates: false // Garante que ele SOBRESCREVA os dados antigos
       })
       .select()
       .single()
 
     if (error) {
-      throw new Error(`Failed to upsert sales snapshot: ${error.message}`)
+      console.error('Snapshot Upsert Error:', error)
+      throw new Error(`Failed to update sales snapshot: ${error.message}`)
     }
 
     return result as DailySalesSnapshot
