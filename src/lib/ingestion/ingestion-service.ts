@@ -38,7 +38,7 @@ export const ingestionService = {
       // O upsert agora trata a limpeza e atualização automática
       for (const record of aggregated) {
         await dailySalesRepository.upsertDailySalesSnapshot({
-          account_id: accountId,
+          accountId: accountId,
           marketplace_id: marketplaceId,
           sku: record.sku,
           snapshot_date: record.date,
@@ -54,7 +54,7 @@ export const ingestionService = {
       const ads = await adsApiClient.getSponsoredProductsReport(adsProfileId, sDate, eDate)
       for (const record of ads) {
         await dailyAdsRepository.upsertDailyAdsSnapshot({
-          account_id: accountId,
+          accountId: accountId,
           marketplace_id: marketplaceId,
           snapshot_date: record.date,
           ads_spend: record.adsSpend,
