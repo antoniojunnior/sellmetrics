@@ -56,9 +56,11 @@ export const spApiClient = {
       const aggregationMap: Record<string, Record<string, any>> = {}
       const rawItemsList: any[] = []
       
-      // Mapa para guardar o último preço conhecido por SKU neste lote
+      // Catálogo de preços por SKU detectado no lote
       const skuPriceBook: Record<string, number> = {}
 
+      // --- PASSAGEM 1: BUSCA TODOS OS PEDIDOS DO LOTE ---
+      const allOrders: any[] = []
       for (const mktId of MARKETPLACE_IDS) {
         let nextToken: string | null = null
         do {
@@ -72,68 +74,77 @@ export const spApiClient = {
             params.CreatedBefore = `${endDate}T23:59:59Z`
           }
 
-          const ordersResponse = await fetch(`${endpoint}/orders/v0/orders?` + new URLSearchParams(params), {
+          const res = await fetch(`${endpoint}/orders/v0/orders?` + new URLSearchParams(params), {
             headers: { 'x-amz-access-token': accessToken }
           })
-          const ordersData = await ordersResponse.json() as any
-          const orders = ordersData.payload?.Orders || []
-          nextToken = ordersData.payload?.NextToken || null
-
-          for (const order of orders) {
-            const dateStr = order.PurchaseDate.split('T')[0]
-            const isCanceled = order.OrderStatus === 'Canceled'
-            
-            const itemsResponse = await fetch(`${endpoint}/orders/v0/orders/${order.AmazonOrderId}/orderItems`, {
-              headers: { 'x-amz-access-token': accessToken }
-            })
-            if (!itemsResponse.ok) continue
-            const itemsData = await itemsResponse.json() as any
-            const items = itemsData.payload?.OrderItems || []
-
-            if (!aggregationMap[dateStr]) aggregationMap[dateStr] = {}
-
-            for (const item of items) {
-              const sku = item.SellerSKU || 'SKU-DESCONHECIDO'
-              let price = Number(item.ItemPrice?.Amount || 0)
-              const qty = item.QuantityOrdered || 0
-
-              // LÓGICA DE PRESERVAÇÃO DE PREÇO:
-              // Se o preço for > 0, guardamos no nosso "livro de preços"
-              if (price > 0) {
-                skuPriceBook[sku] = price / qty
-              } 
-              // Se o preço for 0 e estiver cancelado, tentamos usar o preço conhecido
-              else if (isCanceled && skuPriceBook[sku]) {
-                price = skuPriceBook[sku] * qty
-              }
-
-              rawItemsList.push({
-                account_id: accountId,
-                marketplace_id: mktId,
-                amazon_order_id: order.AmazonOrderId,
-                purchase_date: order.PurchaseDate,
-                sku: sku,
-                quantity: qty,
-                item_price: price,
-                order_status: order.OrderStatus
-              })
-
-              if (!aggregationMap[dateStr][sku]) {
-                aggregationMap[dateStr][sku] = { units: 0, sales: 0, orders: new Set(), canceled_count: 0, canceled_sales: 0 }
-              }
-
-              if (isCanceled) {
-                aggregationMap[dateStr][sku].canceled_count += 1
-                aggregationMap[dateStr][sku].canceled_sales += price
-              } else {
-                aggregationMap[dateStr][sku].units += qty
-                aggregationMap[dateStr][sku].sales += price
-                aggregationMap[dateStr][sku].orders.add(order.AmazonOrderId)
-              }
-            }
-            await new Promise(r => setTimeout(r, 500))
-          }
+          const data = await res.json() as any
+          const orders = data.payload?.Orders || []
+          allOrders.push(...orders.map((o: any) => ({ ...o, mktId })))
+          nextToken = data.payload?.NextToken || null
         } while (nextToken)
+      }
+
+      console.log(`[SP-API] Total de ${allOrders.length} pedidos encontrados para processamento.`)
+
+      // --- PASSAGEM 2: PROCESSAMENTO E AGREGAÇÃO ---
+      for (const order of allOrders) {
+        const itemsRes = await fetch(`${endpoint}/orders/v0/orders/${order.AmazonOrderId}/orderItems`, {
+          headers: { 'x-amz-access-token': accessToken }
+        })
+        if (!itemsRes.ok) continue
+        const itemsData = await itemsRes.json() as any
+        const items = itemsData.payload?.OrderItems || []
+
+        const dateStr = order.PurchaseDate.split('T')[0]
+        const isCanceled = order.OrderStatus === 'Canceled'
+        if (!aggregationMap[dateStr]) aggregationMap[dateStr] = {}
+
+        for (const item of items) {
+          const sku = item.SellerSKU || 'SKU-DESCONHECIDO'
+          let price = Number(item.ItemPrice?.Amount || 0)
+          const qty = item.QuantityOrdered || 0
+
+          // Atualiza o PriceBook se tivermos um preço válido (> 0)
+          if (price > 0) {
+            skuPriceBook[sku] = price / qty
+          }
+
+          // Se for cancelado e o preço veio zerado da Amazon
+          if (isCanceled && price === 0) {
+            // Tenta usar o preço do catálogo deste lote
+            if (skuPriceBook[sku]) {
+              price = skuPriceBook[sku] * qty
+            } 
+            // Se não houver no lote, o dashboard usará o COGS cadastrado na visualização, 
+            // mas aqui no banco salvamos zero para não inventar dados fiscais.
+            // Para efeito gerencial, o painel tratará o valor.
+          }
+
+          rawItemsList.push({
+            account_id: accountId,
+            marketplace_id: order.mktId,
+            amazon_order_id: order.AmazonOrderId,
+            purchase_date: order.PurchaseDate,
+            sku: sku,
+            quantity: qty,
+            item_price: price,
+            order_status: order.OrderStatus
+          })
+
+          if (!aggregationMap[dateStr][sku]) {
+            aggregationMap[dateStr][sku] = { units: 0, sales: 0, orders: new Set(), canceled_count: 0, canceled_sales: 0 }
+          }
+
+          if (isCanceled) {
+            aggregationMap[dateStr][sku].canceled_count += 1
+            aggregationMap[dateStr][sku].canceled_sales += price
+          } else {
+            aggregationMap[dateStr][sku].units += qty
+            aggregationMap[dateStr][sku].sales += price
+            aggregationMap[dateStr][sku].orders.add(order.AmazonOrderId)
+          }
+        }
+        await new Promise(r => setTimeout(r, 500))
       }
 
       const results: SpApiSalesRecord[] = []
