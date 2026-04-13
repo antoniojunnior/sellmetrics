@@ -44,45 +44,37 @@ export const spApiClient = {
     endDate: string
   ): Promise<{ aggregated: SpApiSalesRecord[], rawItems: any[] }> {
     const clientId = process.env.AMAZON_SP_API_CLIENT_ID
-    const region = process.env.AMAZON_SP_API_REGION || 'us-east-1'
-    const endpoint = REGION_ENDPOINTS[region] || REGION_ENDPOINTS['us-east-1']
-
     if (!clientId || clientId.includes('xxx')) {
       return { aggregated: this.generateMockData(startDate, endDate), rawItems: [] }
     }
 
     try {
       const accessToken = await this.getAccessToken()
+      const region = process.env.AMAZON_SP_API_REGION || 'us-east-1'
+      const endpoint = REGION_ENDPOINTS[region] || REGION_ENDPOINTS['us-east-1']
+      
       const aggregationMap: Record<string, Record<string, any>> = {}
       const rawItemsList: any[] = []
+      
+      // Mapa para guardar o último preço conhecido por SKU neste lote
+      const skuPriceBook: Record<string, number> = {}
 
       for (const mktId of MARKETPLACE_IDS) {
         let nextToken: string | null = null
-        
         do {
           const params: Record<string, string> = {
             MarketplaceIds: mktId,
             OrderStatuses: 'Pending,Unshipped,PartiallyShipped,Shipped,InvoiceUnconfirmed,Canceled'
           }
-
-          if (nextToken) {
-            params.NextToken = nextToken
-          } else {
+          if (nextToken) params.NextToken = nextToken
+          else {
             params.CreatedAfter = `${startDate}T00:00:00Z`
             params.CreatedBefore = `${endDate}T23:59:59Z`
           }
 
-          const ordersUrl = `${endpoint}/orders/v0/orders?` + new URLSearchParams(params)
-          const ordersResponse = await fetch(ordersUrl, {
+          const ordersResponse = await fetch(`${endpoint}/orders/v0/orders?` + new URLSearchParams(params), {
             headers: { 'x-amz-access-token': accessToken }
           })
-          
-          if (!ordersResponse.ok) {
-            const errorText = await ordersResponse.text()
-            console.error(`[SP-API Orders] Erro na API de Pedidos (${mktId}):`, errorText)
-            break
-          }
-
           const ordersData = await ordersResponse.json() as any
           const orders = ordersData.payload?.Orders || []
           nextToken = ordersData.payload?.NextToken || null
@@ -91,13 +83,10 @@ export const spApiClient = {
             const dateStr = order.PurchaseDate.split('T')[0]
             const isCanceled = order.OrderStatus === 'Canceled'
             
-            const itemsUrl = `${endpoint}/orders/v0/orders/${order.AmazonOrderId}/orderItems`
-            const itemsResponse = await fetch(itemsUrl, {
+            const itemsResponse = await fetch(`${endpoint}/orders/v0/orders/${order.AmazonOrderId}/orderItems`, {
               headers: { 'x-amz-access-token': accessToken }
             })
-            
             if (!itemsResponse.ok) continue
-
             const itemsData = await itemsResponse.json() as any
             const items = itemsData.payload?.OrderItems || []
 
@@ -105,8 +94,18 @@ export const spApiClient = {
 
             for (const item of items) {
               const sku = item.SellerSKU || 'SKU-DESCONHECIDO'
-              const price = Number(item.ItemPrice?.Amount || 0)
+              let price = Number(item.ItemPrice?.Amount || 0)
               const qty = item.QuantityOrdered || 0
+
+              // LÓGICA DE PRESERVAÇÃO DE PREÇO:
+              // Se o preço for > 0, guardamos no nosso "livro de preços"
+              if (price > 0) {
+                skuPriceBook[sku] = price / qty
+              } 
+              // Se o preço for 0 e estiver cancelado, tentamos usar o preço conhecido
+              else if (isCanceled && skuPriceBook[sku]) {
+                price = skuPriceBook[sku] * qty
+              }
 
               rawItemsList.push({
                 account_id: accountId,
@@ -142,20 +141,14 @@ export const spApiClient = {
         Object.keys(aggregationMap[date]).forEach(sku => {
           const agg = aggregationMap[date][sku]
           results.push({
-            date,
-            sku,
-            unitsSold: agg.units,
-            grossSales: agg.sales,
-            ordersCount: agg.orders.size,
-            canceled_count: agg.canceled_count,
-            canceled_sales: agg.canceled_sales
+            date, sku, unitsSold: agg.units, grossSales: agg.sales,
+            ordersCount: agg.orders.size, canceled_count: agg.canceled_count, canceled_sales: agg.canceled_sales
           })
         })
       })
-
       return { aggregated: results, rawItems: rawItemsList }
     } catch (e: any) {
-      console.error(`[SP-API Orders] Erro Fatal Ingestão: ${e.message}`)
+      console.error(`[SP-API Orders] Erro Fatal: ${e.message}`)
       throw e
     }
   },

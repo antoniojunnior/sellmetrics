@@ -80,10 +80,15 @@ async function OrdersContent({ accountId, startDate, endDate, sku }: { accountId
                   <td className="px-4 py-3 text-right font-mono">{formatCurrency(order.item_price)}</td>
                   <td className="px-4 py-3 text-center">
                     <StatusBadge 
-                      status={order.order_status === 'Shipped' ? 'ok' : 'warning'} 
+                      status={
+                        order.order_status === 'Shipped' ? 'ok' : 
+                        order.order_status === 'Canceled' ? 'error' : 
+                        'warning'
+                      } 
                       label={order.order_status} 
                     />
                   </td>
+
                 </tr>
               )) : (
                 <tr>
