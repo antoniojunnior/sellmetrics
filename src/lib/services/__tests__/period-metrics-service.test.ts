@@ -5,17 +5,17 @@ import { periodManualInputsRepository } from '../../supabase/repositories/period
 import { fixedCostsRepository } from '../../supabase/repositories/fixed-costs-repository'
 import { skuCostRepository } from '../../supabase/repositories/sku-cost-repository'
 
-jest.mock('../../supabase/repositories/daily-sales-repository')
-jest.mock('../../supabase/repositories/daily-ads-repository')
-jest.mock('../../supabase/repositories/period-manual-inputs-repository')
-jest.mock('../../supabase/repositories/fixed-costs-repository')
-jest.mock('../../supabase/repositories/sku-cost-repository')
+vi.mock('../../supabase/repositories/daily-sales-repository')
+vi.mock('../../supabase/repositories/daily-ads-repository')
+vi.mock('../../supabase/repositories/period-manual-inputs-repository')
+vi.mock('../../supabase/repositories/fixed-costs-repository')
+vi.mock('../../supabase/repositories/sku-cost-repository')
 
-const mockSalesRepo = dailySalesRepository.getSalesByPeriod as jest.Mock
-const mockAdsRepo = dailyAdsRepository.getAdsSumByPeriod as jest.Mock
-const mockManualRepo = periodManualInputsRepository.getManualInputsByPeriod as jest.Mock
-const mockFixedRepo = fixedCostsRepository.getFixedCostsByPeriod as jest.Mock
-const mockSkuCostRepo = skuCostRepository.getCostsByPeriod as jest.Mock
+const mockSalesRepo = dailySalesRepository.getSalesByPeriod as ReturnType<typeof vi.fn>
+const mockAdsRepo = dailyAdsRepository.getAdsSumByPeriod as ReturnType<typeof vi.fn>
+const mockManualRepo = periodManualInputsRepository.getManualInputsByPeriod as ReturnType<typeof vi.fn>
+const mockFixedRepo = fixedCostsRepository.getFixedCostsByPeriod as ReturnType<typeof vi.fn>
+const mockSkuCostRepo = skuCostRepository.getCostsByPeriod as ReturnType<typeof vi.fn>
 
 const accountId = 'test-account'
 const marketplaceId = 'ATVPDKIKX0DER'
@@ -27,7 +27,7 @@ const noFixed = { total_fixed_period: 0 }
 
 describe('periodMetricsService', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   test('CENÁRIO BASE — período simples com 1 SKU', async () => {
