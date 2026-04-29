@@ -7,11 +7,12 @@ import { StatusBadge } from '@/components/ui/status-badge'
 import { PeriodSelector } from '@/components/ui/period-selector'
 import { Suspense } from 'react'
 import { SkeletonTable } from '@/components/ui/skeleton-loader'
+import { getTodayBRT } from '@/lib/utils/today'
 
-export default async function OrdersPage({ 
-  searchParams 
-}: { 
-  searchParams: Promise<{ startDate?: string; endDate?: string; sku?: string }> 
+export default async function OrdersPage({
+  searchParams
+}: {
+  searchParams: Promise<{ startDate?: string; endDate?: string; sku?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -19,12 +20,12 @@ export default async function OrdersPage({
   if (!user) redirect('/login')
 
   const params = await searchParams
-  const today = new Date('2026-04-04')
-  const defaultStart = new Date(today)
-  defaultStart.setDate(today.getDate() - 7) // Padrão 7 dias para pedidos
+  const todayStr = getTodayBRT()
+  const [y, m, d] = todayStr.split('-').map(Number)
+  const defaultStartDate = new Date(Date.UTC(y, m - 1, d - 7)).toISOString().split('T')[0]
 
-  const startDate = params.startDate || defaultStart.toISOString().split('T')[0]
-  const endDate = params.endDate || today.toISOString().split('T')[0]
+  const startDate = params.startDate || defaultStartDate
+  const endDate = params.endDate || todayStr
   const sku = params.sku || ''
 
   return (
@@ -102,12 +103,13 @@ async function OrdersContent({ accountId, startDate, endDate, sku }: { accountId
         </div>
       </SectionBlock>
     )
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Verifique se a tabela amazon_orders existe no banco de dados.'
     console.error('Error loading orders:', error)
     return (
       <div className="p-8 bg-negative-light border border-negative/20 rounded-2xl text-center">
         <p className="text-negative font-bold">Erro ao carregar pedidos</p>
-        <p className="text-xs text-text-secondary mt-1">{error.message || 'Verifique se a tabela amazon_orders existe no banco de dados.'}</p>
+        <p className="text-xs text-text-secondary mt-1">{message}</p>
       </div>
     )
   }

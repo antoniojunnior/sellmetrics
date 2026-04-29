@@ -9,14 +9,15 @@ import { SectionBlock } from '@/components/ui/section-block'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PeriodSelector } from '@/components/ui/period-selector'
 import { SkeletonCard, SkeletonBar } from '@/components/ui/skeleton-loader'
+import { getTodayBRT } from '@/lib/utils/today'
 
-const formatCurrency = (val: number | null) => 
+const formatCurrency = (val: number | null) =>
   val !== null ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val) : '—'
 
-export default async function PeriodDashboardPage({ 
-  searchParams 
-}: { 
-  searchParams: Promise<{ startDate?: string; endDate?: string; sku?: string }> 
+export default async function PeriodDashboardPage({
+  searchParams
+}: {
+  searchParams: Promise<{ startDate?: string; endDate?: string; sku?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -24,12 +25,12 @@ export default async function PeriodDashboardPage({
   if (!user) redirect('/login')
 
   const params = await searchParams
-  const today = new Date('2026-04-04')
-  const defaultStart = new Date(today)
-  defaultStart.setDate(today.getDate() - 30)
+  const todayStr = getTodayBRT()
+  const [y, m, d] = todayStr.split('-').map(Number)
+  const defaultStartDate = new Date(Date.UTC(y, m - 1, d - 30)).toISOString().split('T')[0]
 
-  const startDate = params.startDate || defaultStart.toISOString().split('T')[0]
-  const endDate = params.endDate || today.toISOString().split('T')[0]
+  const startDate = params.startDate || defaultStartDate
+  const endDate = params.endDate || todayStr
   const sku = params.sku || ''
 
   return (
@@ -103,7 +104,7 @@ async function OrdersContent({ accountId, startDate, endDate, sku }: { accountId
               <div><p className="text-[10px] font-black text-text-muted uppercase mb-1">Spend</p><p className="text-xl font-bold text-text-primary">{formatCurrency(metrics.ads_spend)}</p></div>
               <div><p className="text-[10px] font-black text-text-muted uppercase mb-1">Sales</p><p className="text-xl font-bold text-text-primary">{formatCurrency(metrics.ads_sales)}</p></div>
               <div><p className="text-[10px] font-black text-text-muted uppercase mb-1">Cliques</p><p className="text-xl font-bold text-text-primary">{metrics.ads_clicks}</p></div>
-              <div><p className="text-[10px] font-black text-text-muted uppercase mb-1">Conversão</p><p className="text-xl font-bold text-text-primary">{(metrics.ads_conversion! * 100).toFixed(1)}%</p></div>
+              <div><p className="text-[10px] font-black text-text-muted uppercase mb-1">Conversão</p><p className="text-xl font-bold text-text-primary">{metrics.ads_conversion !== null ? (metrics.ads_conversion * 100).toFixed(1) : '—'}%</p></div>
             </div>
           </SectionBlock>
 
@@ -115,7 +116,7 @@ async function OrdersContent({ accountId, startDate, endDate, sku }: { accountId
               </div>
               <div className="text-right">
                 <p className="text-[10px] font-black text-text-muted uppercase mb-1">Taxa</p>
-                <p className="text-xl font-bold text-accent">{(metrics.coupon_redemption_rate! * 100).toFixed(1)}%</p>
+                <p className="text-xl font-bold text-accent">{metrics.coupon_redemption_rate !== null ? (metrics.coupon_redemption_rate * 100).toFixed(1) : '—'}%</p>
               </div>
             </div>
           </SectionBlock>
@@ -134,8 +135,8 @@ async function OrdersContent({ accountId, startDate, endDate, sku }: { accountId
 
         <SectionBlock title="Rentabilidade">
           <div className="space-y-4">
-            <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Lucro/Receita</span><span className="font-bold text-positive">{(metrics.profit_over_revenue! * 100).toFixed(1)}%</span></div>
-            <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Lucro/Investimento</span><span className="font-bold text-positive">{(metrics.profit_over_investment! * 100).toFixed(1)}%</span></div>
+            <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Lucro/Receita</span><span className="font-bold text-positive">{metrics.profit_over_revenue !== null ? (metrics.profit_over_revenue * 100).toFixed(1) : '—'}%</span></div>
+            <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Lucro/Investimento</span><span className="font-bold text-positive">{metrics.profit_over_investment !== null ? (metrics.profit_over_investment * 100).toFixed(1) : '—'}%</span></div>
             <div className="flex justify-between items-center"><span className="text-sm text-text-secondary">Markup</span><span className="font-bold text-accent">{metrics.markup?.toFixed(2) || '—'}</span></div>
           </div>
         </SectionBlock>

@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/ui/status-badge'
 import { SubmitButton } from '../components/submit-button'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getTodayBRT } from '@/lib/utils/today'
 
 export default async function SkuCostsPage() {
   const supabase = await createClient()
@@ -15,8 +16,8 @@ export default async function SkuCostsPage() {
   if (!user) redirect('/login')
 
   const accountId = user.id
-  const marketplaceId = 'ATVPDKIKX0DER' // Pode ser expandido futuramente
-  const today = new Date('2026-04-04').toISOString().split('T')[0]
+  const marketplaceId = 'ATVPDKIKX0DER'
+  const today = getTodayBRT()
   
   // 1. Busca todos os SKUs únicos presentes nos pedidos (snapshots) para esta conta
   const { data: snapshotSkus } = await supabase

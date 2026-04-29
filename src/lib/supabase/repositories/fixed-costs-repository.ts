@@ -46,9 +46,14 @@ export const fixedCostsRepository = {
       throw new Error(`Failed to fetch fixed costs: ${error.message}`)
     }
 
-    const start = new Date(startDate)
-    const end = new Date(endDate)
-    
+    const parseUTC = (s: string) => {
+      const [y, m, d] = s.split('-').map(Number)
+      return new Date(Date.UTC(y, m - 1, d))
+    }
+
+    const start = parseUTC(startDate)
+    const end = parseUTC(endDate)
+
     const totals: ProportionalFixedCost = {
       accounting_fees: 0,
       rent: 0,
@@ -58,19 +63,26 @@ export const fixedCostsRepository = {
     }
 
     data.forEach((monthData) => {
-      const monthStart = new Date(monthData.year_month)
-      const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0)
-      
-      // Verifica se há qualquer intersecção entre o mês e o período
-      const hasIntersection = start <= monthEnd && end >= monthStart
-      
-      if (hasIntersection) {
-        // Regra alterada: Contabiliza o valor INTEGRAL do mês se houver intersecção
-        totals.accounting_fees += Number(monthData.accounting_fees)
-        totals.rent += Number(monthData.rent)
-        totals.amazon_prime += Number(monthData.amazon_prime)
-        totals.other_fixed_costs += Number(monthData.other_fixed_costs)
-        totals.total_fixed_period += Number(monthData.total_fixed_month)
+      const monthStart = parseUTC(monthData.year_month)
+      const monthEnd = parseUTC(
+        `${monthStart.getUTCFullYear()}-${String(monthStart.getUTCMonth() + 2).padStart(2, '0')}-01`
+      )
+      // monthEnd is first day of next month; last day of current month = monthEnd - 1 day
+      monthEnd.setUTCDate(monthEnd.getUTCDate() - 1)
+
+      const intersectStart = start > monthStart ? start : monthStart
+      const intersectEnd = end < monthEnd ? end : monthEnd
+
+      if (intersectStart <= intersectEnd) {
+        const totalMonthDays = Math.round((monthEnd.getTime() - monthStart.getTime()) / 86400000) + 1
+        const intersectDays = Math.round((intersectEnd.getTime() - intersectStart.getTime()) / 86400000) + 1
+        const ratio = intersectDays / totalMonthDays
+
+        totals.accounting_fees += Number(monthData.accounting_fees) * ratio
+        totals.rent += Number(monthData.rent) * ratio
+        totals.amazon_prime += Number(monthData.amazon_prime) * ratio
+        totals.other_fixed_costs += Number(monthData.other_fixed_costs) * ratio
+        totals.total_fixed_period += Number(monthData.total_fixed_month) * ratio
       }
     })
 
