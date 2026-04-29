@@ -1,4 +1,5 @@
 import { createClient } from '../server'
+import { createAdminClient } from '../admin'
 
 export interface AmazonOrderItem {
   id?: string
@@ -15,8 +16,8 @@ export interface AmazonOrderItem {
 export const ordersRepository = {
   async upsertOrderItems(items: AmazonOrderItem[]) {
     if (items.length === 0) return
-    
-    const supabase = await createClient()
+
+    const supabase = createAdminClient()
     
     // Adicionamos updated_at manualmente para garantir que o banco registre a mudança
     const itemsToUpsert = items.map(item => ({

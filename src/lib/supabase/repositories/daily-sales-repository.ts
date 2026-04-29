@@ -1,4 +1,5 @@
 import { createClient } from '../server'
+import { createAdminClient } from '../admin'
 import { DailySalesSnapshot } from '../types'
 
 export interface SalesSum {
@@ -9,7 +10,7 @@ export interface SalesSum {
 
 export const dailySalesRepository = {
   async upsertDailySalesSnapshot(data: Omit<DailySalesSnapshot, 'id' | 'created_at' | 'updated_at'>): Promise<DailySalesSnapshot> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     // Forçamos o updated_at para garantir que o banco registre a atualização
     const dataWithTimestamp = {
@@ -35,7 +36,7 @@ export const dailySalesRepository = {
   },
 
   async deleteSalesByPeriod(accountId: string, startDate: string, endDate: string, sku?: string): Promise<void> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     let query = supabase
       .from('daily_sales_snapshot')

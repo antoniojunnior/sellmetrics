@@ -1,4 +1,5 @@
 import { createClient } from '../server'
+import { createAdminClient } from '../admin'
 import { DailyAdsSnapshot } from '../types'
 
 export interface AdsSum {
@@ -10,7 +11,7 @@ export interface AdsSum {
 
 export const dailyAdsRepository = {
   async upsertDailyAdsSnapshot(data: Omit<DailyAdsSnapshot, 'id' | 'created_at' | 'updated_at'>): Promise<DailyAdsSnapshot> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { data: result, error } = await supabase
       .from('daily_ads_snapshot')
