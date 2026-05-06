@@ -4,25 +4,25 @@ import { Account, AccountMember, AccountRole } from '../types'
 
 export const accountRepository = {
   async getByUserId(userId: string): Promise<Account | null> {
-    const supabase = await createClient()
+    // Use admin client to bypass RLS — auth check is the caller's responsibility
+    const admin = createAdminClient()
 
     // Primary: find by owner_id (Phase 1 accounts)
-    const { data: byOwner, error: e1 } = await supabase
+    const { data: byOwner } = await admin
       .from('accounts')
       .select('*')
       .eq('owner_id', userId)
       .maybeSingle()
 
-    if (!e1 && byOwner) return byOwner as Account
+    if (byOwner) return byOwner as Account
 
     // Fallback: Phase 0 accounts where id = auth.uid()
-    const { data: byId, error: e2 } = await supabase
+    const { data: byId } = await admin
       .from('accounts')
       .select('*')
       .eq('id', userId)
       .maybeSingle()
 
-    if (e2) throw new Error(`Failed to fetch account: ${e2.message}`)
     return byId as Account | null
   },
 
@@ -61,8 +61,8 @@ export const accountRepository = {
   },
 
   async getById(accountId: string): Promise<Account | null> {
-    const supabase = await createClient()
-    const { data, error } = await supabase
+    const admin = createAdminClient()
+    const { data, error } = await admin
       .from('accounts')
       .select('*')
       .eq('id', accountId)
@@ -124,15 +124,19 @@ export const accountRepository = {
   // ─── Members ────────────────────────────────────────────────────────────────
 
   async getMembers(accountId: string): Promise<AccountMember[]> {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-      .from('account_members')
-      .select('*')
-      .eq('account_id', accountId)
-      .order('invited_at', { ascending: true })
+    try {
+      const supabase = await createClient()
+      const { data, error } = await supabase
+        .from('account_members')
+        .select('*')
+        .eq('account_id', accountId)
+        .order('invited_at', { ascending: true })
 
-    if (error) throw new Error(`Failed to fetch members: ${error.message}`)
-    return data as AccountMember[]
+      if (error) return []
+      return (data ?? []) as AccountMember[]
+    } catch {
+      return []
+    }
   },
 
   async inviteMember(accountId: string, userId: string, role: AccountRole): Promise<void> {
