@@ -1,3 +1,5 @@
+export const runtime = 'edge'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { encrypt } from '@/lib/utils/encryption'
@@ -56,7 +58,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard/account?error=no_account', request.url))
   }
 
-  const encrypted = encrypt(tokens.refresh_token)
+  const encrypted = await encrypt(tokens.refresh_token)
   await accountRepository.updateEncryptedTokens(account.id, { sp_api_refresh_token_enc: encrypted })
 
   // Advance onboarding to step 2 if still on step 1

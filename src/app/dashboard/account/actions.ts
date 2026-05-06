@@ -1,6 +1,5 @@
 'use server'
 
-import { randomBytes } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
@@ -40,7 +39,7 @@ export async function saveAccountInfo(_prev: ActionResult | null, formData: Form
 }
 
 export async function startAmazonOAuth(): Promise<never> {
-  const state = randomBytes(16).toString('hex')
+  const state = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('')
   const cookieStore = await cookies()
   cookieStore.set('amazon_oauth_state', state, { httpOnly: true, maxAge: 600, path: '/' })
 
@@ -52,7 +51,7 @@ export async function startAmazonOAuth(): Promise<never> {
 }
 
 export async function startAdsOAuth(): Promise<never> {
-  const state = randomBytes(16).toString('hex')
+  const state = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('')
   const cookieStore = await cookies()
   cookieStore.set('amazon_ads_oauth_state', state, { httpOnly: true, maxAge: 600, path: '/' })
 
