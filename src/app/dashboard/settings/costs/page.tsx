@@ -5,6 +5,7 @@ import { SkuCostParameters } from '@/lib/supabase/types'
 import { SectionBlock } from '@/components/ui/section-block'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { SubmitButton } from '../components/submit-button'
+import { ActionForm } from '../components/action-form'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getTodayBRT } from '@/lib/utils/today'
@@ -47,7 +48,7 @@ export default async function SkuCostsPage() {
         subtitle="As alterações fecham automaticamente o regime anterior e iniciam a nova vigência."
         className="border-dashed bg-background/30"
       >
-        <form action={saveSkuCost} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 items-end">
+        <ActionForm action={saveSkuCost} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 items-end">
           <input type="hidden" name="account_id" value={accountId} />
           <input type="hidden" name="marketplace_id" value={marketplaceId} />
           
@@ -78,7 +79,7 @@ export default async function SkuCostsPage() {
           <div>
             <SubmitButton label="Salvar" className="w-full h-[38px]" />
           </div>
-        </form>
+        </ActionForm>
       </SectionBlock>
 
       {/* Listagem de SKUs Identificados */}

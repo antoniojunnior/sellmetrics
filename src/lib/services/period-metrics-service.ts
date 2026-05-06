@@ -1,7 +1,7 @@
 import { dailyAdsRepository } from '../supabase/repositories/daily-ads-repository'
 import { dailySalesRepository } from '../supabase/repositories/daily-sales-repository'
 import { fixedCostsRepository } from '../supabase/repositories/fixed-costs-repository'
-import { periodManualInputsRepository } from '../supabase/repositories/period-manual-inputs-repository'
+import { couponDailyRepository } from '../supabase/repositories/coupon-daily-repository'
 import { skuCostRepository } from '../supabase/repositories/sku-cost-repository'
 import { SkuCostParameters } from '../supabase/types'
 
@@ -62,10 +62,10 @@ export const periodMetricsService = {
     sku?: string
   ): Promise<PeriodMetrics> {
     // 1. Coleta de dados em paralelo
-    const [salesSnapshots, adsSum, manualInputsList, fixedCosts] = await Promise.all([
+    const [salesSnapshots, adsSum, couponSum, fixedCosts] = await Promise.all([
       dailySalesRepository.getSalesByPeriod(accountId, startDate, endDate, sku),
       dailyAdsRepository.getAdsSumByPeriod(accountId, startDate, endDate),
-      periodManualInputsRepository.getManualInputsByPeriod(accountId, startDate, endDate),
+      couponDailyRepository.getCouponSumByPeriod(accountId, startDate, endDate),
       fixedCostsRepository.getFixedCostsByPeriod(accountId, startDate, endDate)
     ])
 
@@ -126,10 +126,7 @@ export const periodMetricsService = {
       amazon_fee_total += Math.round(sale.units_sold * Number(costs.amazon_fee_unit) * 100) / 100
     }
 
-    const coupon_sales_value = manualInputsList.reduce((acc, curr) => acc + Number(curr.coupon_sales_value), 0)
-    const coupon_cost_value = manualInputsList.reduce((acc, curr) => acc + Number(curr.coupon_cost_value), 0)
-    const coupon_distributed = manualInputsList.reduce((acc, curr) => acc + curr.coupon_distributed, 0)
-    const coupon_redeemed = manualInputsList.reduce((acc, curr) => acc + curr.coupon_redeemed, 0)
+    const { coupon_sales_value, coupon_cost_value, coupon_distributed, coupon_redeemed } = couponSum
     const coupon_redemption_rate = coupon_distributed > 0 ? coupon_redeemed / coupon_distributed : null
 
     const total_variable_cost = has_missing_costs 

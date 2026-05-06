@@ -4,7 +4,8 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { skuCostRepository } from '@/lib/supabase/repositories/sku-cost-repository'
 import { fixedCostsRepository } from '@/lib/supabase/repositories/fixed-costs-repository'
-import { periodManualInputsRepository } from '@/lib/supabase/repositories/period-manual-inputs-repository'
+import { couponDailyRepository } from '@/lib/supabase/repositories/coupon-daily-repository'
+import { ActionResult } from './types'
 
 // 1. Schema para SCD2 SkuCost
 const skuCostSchema = z.object({
@@ -13,22 +14,27 @@ const skuCostSchema = z.object({
   sku: z.string().min(1, 'SKU obrigatório'),
   unit_cost: z.coerce.number().positive(),
   prep_cost_unit: z.coerce.number().nonnegative(),
-  tax_rate: z.coerce.number().min(0).max(100).transform(v => v / 100), 
+  tax_rate: z.coerce.number().min(0).max(100).transform(v => v / 100),
   amazon_fee_unit: z.coerce.number().nonnegative(),
   valid_from: z.string().refine(v => !isNaN(Date.parse(v)), 'Data inválida')
 })
 
-export async function saveSkuCost(formData: FormData): Promise<void> {
+export async function saveSkuCost(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const data = Object.fromEntries(formData.entries())
   const validated = skuCostSchema.safeParse(data)
 
-  if (!validated.success) return
+  if (!validated.success) {
+    const firstError = validated.error.errors[0]?.message ?? 'Dados inválidos'
+    return { ok: false, error: firstError }
+  }
 
   try {
     await skuCostRepository.createCostParameters(validated.data)
     revalidatePath('/dashboard/settings/costs')
+    return { ok: true }
   } catch (e) {
-    console.error(e)
+    const message = e instanceof Error ? e.message : 'Erro ao salvar custo do SKU'
+    return { ok: false, error: message }
   }
 }
 
@@ -42,22 +48,27 @@ const fixedCostsSchema = z.object({
   other_fixed_costs: z.coerce.number().nonnegative()
 })
 
-export async function saveFixedCosts(formData: FormData): Promise<void> {
+export async function saveFixedCosts(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const data = Object.fromEntries(formData.entries())
   const validated = fixedCostsSchema.safeParse(data)
 
-  if (!validated.success) return
+  if (!validated.success) {
+    const firstError = validated.error.errors[0]?.message ?? 'Dados inválidos'
+    return { ok: false, error: firstError }
+  }
 
   try {
     await fixedCostsRepository.upsertFixedCostsMonth(validated.data)
     revalidatePath('/dashboard/settings/fixed-costs')
+    return { ok: true }
   } catch (e) {
-    console.error(e)
+    const message = e instanceof Error ? e.message : 'Erro ao salvar custos fixos'
+    return { ok: false, error: message }
   }
 }
 
-// 3. Schema para Inputs Manuais
-const manualInputsSchema = z.object({
+// 3. Schema para Cupons Diários (F0.6 — substitui period_manual_inputs)
+const couponDailySchema = z.object({
   account_id: z.string(),
   period_start_date: z.string(),
   period_end_date: z.string(),
@@ -65,23 +76,28 @@ const manualInputsSchema = z.object({
   coupon_cost_value: z.coerce.number().nonnegative(),
   coupon_distributed: z.coerce.number().int().nonnegative(),
   coupon_redeemed: z.coerce.number().int().nonnegative(),
-  manual_notes: z.string().optional().nullable()
+}).refine(d => d.period_end_date >= d.period_start_date, {
+  message: 'Data de fim deve ser igual ou posterior ao início',
+  path: ['period_end_date'],
 })
 
-export async function saveManualInputs(formData: FormData): Promise<void> {
+export async function saveCouponDaily(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const rawData = Object.fromEntries(formData.entries())
-  const validated = manualInputsSchema.safeParse(rawData)
+  const validated = couponDailySchema.safeParse(rawData)
 
-  if (!validated.success) return
+  if (!validated.success) {
+    const firstError = validated.error.errors[0]?.message ?? 'Dados inválidos'
+    return { ok: false, error: firstError }
+  }
+
+  const { account_id, period_start_date, period_end_date, ...values } = validated.data
 
   try {
-    await periodManualInputsRepository.upsertPeriodManualInputs({
-      ...validated.data,
-      manual_notes: validated.data.manual_notes || null,
-      manual_adjustments: null
-    })
+    await couponDailyRepository.upsertCouponRange(account_id, period_start_date, period_end_date, values)
     revalidatePath('/dashboard/settings/manual-inputs')
+    return { ok: true }
   } catch (e) {
-    console.error(e)
+    const message = e instanceof Error ? e.message : 'Erro ao salvar cupons'
+    return { ok: false, error: message }
   }
 }

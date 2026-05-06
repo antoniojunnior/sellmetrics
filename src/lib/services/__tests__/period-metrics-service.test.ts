@@ -1,19 +1,19 @@
 import { periodMetricsService } from '../period-metrics-service'
 import { dailySalesRepository } from '../../supabase/repositories/daily-sales-repository'
 import { dailyAdsRepository } from '../../supabase/repositories/daily-ads-repository'
-import { periodManualInputsRepository } from '../../supabase/repositories/period-manual-inputs-repository'
+import { couponDailyRepository } from '../../supabase/repositories/coupon-daily-repository'
 import { fixedCostsRepository } from '../../supabase/repositories/fixed-costs-repository'
 import { skuCostRepository } from '../../supabase/repositories/sku-cost-repository'
 
 vi.mock('../../supabase/repositories/daily-sales-repository')
 vi.mock('../../supabase/repositories/daily-ads-repository')
-vi.mock('../../supabase/repositories/period-manual-inputs-repository')
+vi.mock('../../supabase/repositories/coupon-daily-repository')
 vi.mock('../../supabase/repositories/fixed-costs-repository')
 vi.mock('../../supabase/repositories/sku-cost-repository')
 
 const mockSalesRepo = dailySalesRepository.getSalesByPeriod as ReturnType<typeof vi.fn>
 const mockAdsRepo = dailyAdsRepository.getAdsSumByPeriod as ReturnType<typeof vi.fn>
-const mockManualRepo = periodManualInputsRepository.getManualInputsByPeriod as ReturnType<typeof vi.fn>
+const mockCouponRepo = couponDailyRepository.getCouponSumByPeriod as ReturnType<typeof vi.fn>
 const mockFixedRepo = fixedCostsRepository.getFixedCostsByPeriod as ReturnType<typeof vi.fn>
 const mockSkuCostRepo = skuCostRepository.getCostsByPeriod as ReturnType<typeof vi.fn>
 
@@ -22,7 +22,7 @@ const marketplaceId = 'ATVPDKIKX0DER'
 const sku = 'SKU-001'
 
 const noAds = { ads_spend: 0, ads_sales: 0, ads_clicks: 0, ads_orders: 0 }
-const noCoupons: never[] = []
+const noCoupons = { coupon_sales_value: 0, coupon_cost_value: 0, coupon_distributed: 0, coupon_redeemed: 0 }
 const noFixed = { total_fixed_period: 0 }
 
 describe('periodMetricsService', () => {
@@ -44,12 +44,12 @@ describe('periodMetricsService', () => {
 
     mockAdsRepo.mockResolvedValue({ ads_spend: 50, ads_sales: 150, ads_clicks: 100, ads_orders: 10 })
 
-    mockManualRepo.mockResolvedValue([{
+    mockCouponRepo.mockResolvedValue({
       coupon_sales_value: 20,
       coupon_cost_value: 5,
       coupon_distributed: 10,
       coupon_redeemed: 2,
-    }])
+    })
 
     mockFixedRepo.mockResolvedValue({ total_fixed_period: 25 })
 
@@ -96,7 +96,7 @@ describe('periodMetricsService', () => {
     ])
 
     mockAdsRepo.mockResolvedValue(noAds)
-    mockManualRepo.mockResolvedValue(noCoupons)
+    mockCouponRepo.mockResolvedValue(noCoupons)
     mockFixedRepo.mockResolvedValue(noFixed)
 
     // Regime 1: valid até 02 (valid_to='2026-04-03' significa que o dia 03 já é o novo)
@@ -121,7 +121,7 @@ describe('periodMetricsService', () => {
     ])
 
     mockAdsRepo.mockResolvedValue(noAds)
-    mockManualRepo.mockResolvedValue(noCoupons)
+    mockCouponRepo.mockResolvedValue(noCoupons)
     mockFixedRepo.mockResolvedValue(noFixed)
 
     mockSkuCostRepo.mockResolvedValue([{
@@ -145,7 +145,7 @@ describe('periodMetricsService', () => {
     ])
 
     mockAdsRepo.mockResolvedValue(noAds)
-    mockManualRepo.mockResolvedValue(noCoupons)
+    mockCouponRepo.mockResolvedValue(noCoupons)
     mockFixedRepo.mockResolvedValue(noFixed)
     mockSkuCostRepo.mockResolvedValue([]) // sem regimes → has_missing_costs = true
 
@@ -160,7 +160,7 @@ describe('periodMetricsService', () => {
     // 25/03 a 05/04 = 12 dias
     mockSalesRepo.mockResolvedValue([])
     mockAdsRepo.mockResolvedValue(noAds)
-    mockManualRepo.mockResolvedValue(noCoupons)
+    mockCouponRepo.mockResolvedValue(noCoupons)
 
     // Repositório já retorna o total proporcional calculado
     mockFixedRepo.mockResolvedValue({ total_fixed_period: 120 })

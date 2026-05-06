@@ -6,7 +6,7 @@
 CREATE TABLE IF NOT EXISTS coupon_daily (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id TEXT NOT NULL,
-  sku TEXT,                              -- NULL = vale para todos os SKUs da conta
+  sku TEXT NOT NULL DEFAULT '',          -- '' = vale para todos os SKUs da conta
   snapshot_date DATE NOT NULL,
   coupon_sales_value NUMERIC(12,2) NOT NULL DEFAULT 0,
   coupon_cost_value NUMERIC(12,2) NOT NULL DEFAULT 0,
@@ -42,7 +42,8 @@ CREATE TRIGGER coupon_daily_updated_at
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- NOTAS:
+-- - sku = '' (string vazia) representa cupons de conta inteira (todos os SKUs).
+--   Usar string vazia em vez de NULL garante que UNIQUE (account_id, sku, snapshot_date) funcione corretamente.
 -- - A migração de dados de period_manual_inputs → coupon_daily deve ser feita manualmente
 --   ou via script, distribuindo o valor do período pelos dias individuais.
--- - O código de consumo (period-manual-inputs-repository.ts) ainda usa a tabela antiga.
---   A migração completa do código acontece na Fase 1.
+-- - O código de consumo foi migrado: coupon-daily-repository.ts substitui period-manual-inputs-repository.ts.

@@ -54,6 +54,19 @@ export interface FixedCostsMonthly {
   updated_at: string
 }
 
+export interface CouponDaily {
+  id: string
+  account_id: string
+  sku: string
+  snapshot_date: string
+  coupon_sales_value: number
+  coupon_cost_value: number
+  coupon_distributed: number
+  coupon_redeemed: number
+  created_at: string
+  updated_at: string
+}
+
 export interface PeriodManualInputs {
   id: string
   account_id: string
@@ -67,4 +80,45 @@ export interface PeriodManualInputs {
   manual_adjustments: Record<string, unknown> | null
   created_at: string
   updated_at: string
+}
+
+export type AccountRole = 'owner' | 'member' | 'viewer'
+
+export interface SubscriptionPlan {
+  id: string
+  name: string
+  price_brl: number
+  sku_limit: number | null
+  user_limit: number
+  history_days: number | null
+  created_at: string
+}
+
+export interface Account {
+  id: string
+  name: string | null
+  marketplace_id: string
+  ads_profile_id: string
+  currency: string
+  timezone: string
+  active: boolean
+  owner_id: string | null
+  sp_api_refresh_token_enc: string | null
+  ads_refresh_token_enc: string | null
+  plan_id: string
+  trial_ends_at: string | null
+  onboarding_completed: boolean
+  onboarding_step: number
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AccountMember {
+  account_id: string
+  user_id: string
+  role: AccountRole
+  invited_at: string
+  accepted_at: string | null
 }

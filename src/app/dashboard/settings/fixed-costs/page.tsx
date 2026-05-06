@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { FixedCostsMonthly } from '@/lib/supabase/types'
 import { SectionBlock } from '@/components/ui/section-block'
 import { SubmitButton } from '../components/submit-button'
+import { ActionForm } from '../components/action-form'
 import { redirect } from 'next/navigation'
 
 export default async function FixedCostsPage() {
@@ -24,7 +25,7 @@ export default async function FixedCostsPage() {
     <div className="space-y-8">
       {/* Formulário */}
       <SectionBlock title="Novo Lançamento Mensal" className="border-dashed bg-background/30">
-        <form action={saveFixedCosts} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
+        <ActionForm action={saveFixedCosts} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
           <input type="hidden" name="account_id" value={user.id} />
           
           <div className="space-y-1">
@@ -50,7 +51,7 @@ export default async function FixedCostsPage() {
           <div>
             <SubmitButton label="Salvar" className="w-full h-[38px]" />
           </div>
-        </form>
+        </ActionForm>
       </SectionBlock>
 
       {/* Grid de Meses */}
