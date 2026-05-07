@@ -63,11 +63,15 @@ export async function POST(request: NextRequest) {
       externalReference: account.id,
     })
 
-    if (!subscription.invoiceUrl) {
+    // invoiceUrl lives on the first payment, not on the subscription itself
+    const payments = await asaas.subscriptions.payments(subscription.id)
+    const invoiceUrl = payments.data[0]?.invoiceUrl
+
+    if (!invoiceUrl) {
       return NextResponse.json({ error: 'Failed to generate payment link' }, { status: 500 })
     }
 
-    return NextResponse.json({ url: subscription.invoiceUrl })
+    return NextResponse.json({ url: invoiceUrl })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unexpected error'
     console.error('[checkout]', message)

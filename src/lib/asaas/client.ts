@@ -17,7 +17,17 @@ export interface AsaasSubscription {
   cycle: AsaasCycle
   value: number
   status: AsaasSubscriptionStatus
+}
+
+export interface AsaasPayment {
+  id: string
+  customer: string
+  subscription: string | null
+  status: string
+  value: number
   invoiceUrl: string | null
+  bankSlipUrl: string | null
+  pixQrCodeUrl: string | null
 }
 
 export interface AsaasWebhookEvent {
@@ -111,6 +121,9 @@ export const asaas = {
     },
     inactivate(subscriptionId: string) {
       return asaasRequest<AsaasSubscription>('DELETE', `/subscriptions/${subscriptionId}`)
+    },
+    payments(subscriptionId: string) {
+      return asaasRequest<{ data: AsaasPayment[] }>('GET', `/subscriptions/${subscriptionId}/payments?limit=1`)
     },
   },
 }
