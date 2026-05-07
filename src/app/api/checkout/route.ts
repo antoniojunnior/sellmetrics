@@ -48,6 +48,11 @@ export async function POST(request: NextRequest) {
       await accountRepository.updateBilling(account.id, { asaas_customer_id: customerId })
     }
 
+    // Always patch CPF/CNPJ — customer may have been created without it
+    if (cpfCnpj) {
+      await asaas.customers.update(customerId, { cpfCnpj })
+    }
+
     const subscription = await asaas.subscriptions.create({
       customer: customerId,
       billingType: 'UNDEFINED',

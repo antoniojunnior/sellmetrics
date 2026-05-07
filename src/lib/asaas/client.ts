@@ -59,7 +59,7 @@ function getApiKey(): string {
 }
 
 async function asaasRequest<T>(
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
   body?: unknown,
 ): Promise<T> {
@@ -88,6 +88,9 @@ export const asaas = {
   customers: {
     create(data: { name: string; email: string; cpfCnpj?: string; externalReference?: string }) {
       return asaasRequest<AsaasCustomer>('POST', '/customers', data)
+    },
+    update(customerId: string, data: { cpfCnpj?: string; name?: string }) {
+      return asaasRequest<AsaasCustomer>('PUT', `/customers/${customerId}`, data)
     },
     findByEmail(email: string) {
       return asaasRequest<{ data: AsaasCustomer[] }>('GET', `/customers?email=${encodeURIComponent(email)}&limit=1`)
