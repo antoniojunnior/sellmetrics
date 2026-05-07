@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const ONBOARDING_EXEMPT = [
@@ -44,32 +45,43 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith('/dashboard') &&
     !ONBOARDING_EXEMPT.some(p => pathname.startsWith(p))
   ) {
-    // Check via cookie to avoid DB query on every request
     const onboardingDone = request.cookies.get('sm_onboarding')?.value === 'done'
     if (!onboardingDone) {
       try {
-        const { data: account } = await supabase
+        // Use service role to bypass RLS — avoids redirect loop when policies block the query
+        const admin = createAdminClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+          process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+        )
+
+        const { data: account } = await admin
           .from('accounts')
           .select('onboarding_completed')
-          .eq('owner_id', user.id)
+          .or(`owner_id.eq.${user.id},id.eq.${user.id}`)
           .maybeSingle()
 
-        if (!account || !account.onboarding_completed) {
+        if (account && !account.onboarding_completed) {
           const url = request.nextUrl.clone()
           url.pathname = '/dashboard/onboarding'
           return NextResponse.redirect(url)
         }
 
-        if (account.onboarding_completed) {
-          supabaseResponse.cookies.set('sm_onboarding', 'done', {
-            httpOnly: false,
-            maxAge: 60 * 60 * 24 * 30, // 30 days
-            path: '/',
-            sameSite: 'lax',
-          })
+        if (!account) {
+          // No account yet — send to onboarding to create one
+          const url = request.nextUrl.clone()
+          url.pathname = '/dashboard/onboarding'
+          return NextResponse.redirect(url)
         }
+
+        // account.onboarding_completed = true — cache in cookie
+        supabaseResponse.cookies.set('sm_onboarding', 'done', {
+          httpOnly: false,
+          maxAge: 60 * 60 * 24 * 30,
+          path: '/',
+          sameSite: 'lax',
+        })
       } catch {
-        // accounts table not yet created — skip onboarding gate
+        // DB unavailable — allow through, page handles it
       }
     }
   }
