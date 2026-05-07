@@ -12,53 +12,59 @@ function nextDueDate(): string {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { planId } = await request.json() as { planId: string }
-  const value = PLAN_PRICES[planId]
-  if (!value) {
-    return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
-  }
-
-  const account = await accountRepository.getByUserId(user.id)
-  if (!account) {
-    return NextResponse.json({ error: 'Account not found' }, { status: 404 })
-  }
-
-  let customerId = account.asaas_customer_id ?? undefined
-
-  if (!customerId) {
-    const existing = await asaas.customers.findByEmail(user.email ?? '')
-    if (existing.data.length > 0) {
-      customerId = existing.data[0].id
-    } else {
-      const customer = await asaas.customers.create({
-        name: account.name ?? user.email ?? 'Sellmetrics User',
-        email: user.email ?? '',
-        externalReference: account.id,
-      })
-      customerId = customer.id
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    await accountRepository.updateBilling(account.id, { asaas_customer_id: customerId })
+
+    const { planId } = await request.json() as { planId: string }
+    const value = PLAN_PRICES[planId]
+    if (!value) {
+      return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
+    }
+
+    const account = await accountRepository.getByUserId(user.id)
+    if (!account) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 404 })
+    }
+
+    let customerId = account.asaas_customer_id ?? undefined
+
+    if (!customerId) {
+      const existing = await asaas.customers.findByEmail(user.email ?? '')
+      if (existing.data.length > 0) {
+        customerId = existing.data[0].id
+      } else {
+        const customer = await asaas.customers.create({
+          name: account.name ?? user.email ?? 'Sellmetrics User',
+          email: user.email ?? '',
+          externalReference: account.id,
+        })
+        customerId = customer.id
+      }
+      await accountRepository.updateBilling(account.id, { asaas_customer_id: customerId })
+    }
+
+    const subscription = await asaas.subscriptions.create({
+      customer: customerId,
+      billingType: 'UNDEFINED',
+      cycle: 'MONTHLY',
+      value,
+      nextDueDate: nextDueDate(),
+      description: `Sellmetrics ${planId.charAt(0).toUpperCase() + planId.slice(1)}`,
+      externalReference: account.id,
+    })
+
+    if (!subscription.invoiceUrl) {
+      return NextResponse.json({ error: 'Failed to generate payment link' }, { status: 500 })
+    }
+
+    return NextResponse.json({ url: subscription.invoiceUrl })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unexpected error'
+    console.error('[checkout]', message)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
-
-  const subscription = await asaas.subscriptions.create({
-    customer: customerId,
-    billingType: 'UNDEFINED',
-    cycle: 'MONTHLY',
-    value,
-    nextDueDate: nextDueDate(),
-    description: `Sellmetrics ${planId.charAt(0).toUpperCase() + planId.slice(1)}`,
-    externalReference: account.id,
-  })
-
-  if (!subscription.invoiceUrl) {
-    return NextResponse.json({ error: 'Failed to generate payment link' }, { status: 500 })
-  }
-
-  return NextResponse.json({ url: subscription.invoiceUrl })
 }
