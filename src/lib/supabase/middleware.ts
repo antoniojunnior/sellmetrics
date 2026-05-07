@@ -54,13 +54,13 @@ export async function updateSession(request: NextRequest) {
           .eq('owner_id', user.id)
           .maybeSingle()
 
-        if (account && !account.onboarding_completed) {
+        if (!account || !account.onboarding_completed) {
           const url = request.nextUrl.clone()
           url.pathname = '/dashboard/onboarding'
           return NextResponse.redirect(url)
         }
 
-        if (account?.onboarding_completed) {
+        if (account.onboarding_completed) {
           supabaseResponse.cookies.set('sm_onboarding', 'done', {
             httpOnly: false,
             maxAge: 60 * 60 * 24 * 30, // 30 days
