@@ -86,7 +86,7 @@ async function asaasRequest<T>(
 
 export const asaas = {
   customers: {
-    create(data: { name: string; email: string; externalReference?: string }) {
+    create(data: { name: string; email: string; cpfCnpj?: string; externalReference?: string }) {
       return asaasRequest<AsaasCustomer>('POST', '/customers', data)
     },
     findByEmail(email: string) {

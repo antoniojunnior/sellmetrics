@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { planId } = await request.json() as { planId: string }
+    const { planId, cpfCnpj } = await request.json() as { planId: string; cpfCnpj?: string }
     const value = PLAN_PRICES[planId]
     if (!value) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
         const customer = await asaas.customers.create({
           name: account.name ?? user.email ?? 'Sellmetrics User',
           email: user.email ?? '',
+          cpfCnpj: cpfCnpj ?? '',
           externalReference: account.id,
         })
         customerId = customer.id
