@@ -92,10 +92,10 @@ async function asaasRequest<T>(
 export const asaas = {
   customers: {
     create(data: { name: string; email: string; externalReference?: string }) {
-      return asaasRequest<AsaasCustomer>('POST', '/v3/customers', data)
+      return asaasRequest<AsaasCustomer>('POST', '/customers', data)
     },
     findByEmail(email: string) {
-      return asaasRequest<{ data: AsaasCustomer[] }>('GET', `/v3/customers?email=${encodeURIComponent(email)}&limit=1`)
+      return asaasRequest<{ data: AsaasCustomer[] }>('GET', `/customers?email=${encodeURIComponent(email)}&limit=1`)
     },
   },
 
@@ -109,10 +109,10 @@ export const asaas = {
       description: string
       externalReference: string
     }) {
-      return asaasRequest<AsaasSubscription>('POST', '/v3/subscriptions', data)
+      return asaasRequest<AsaasSubscription>('POST', '/subscriptions', data)
     },
     inactivate(subscriptionId: string) {
-      return asaasRequest<AsaasSubscription>('DELETE', `/v3/subscriptions/${subscriptionId}`)
+      return asaasRequest<AsaasSubscription>('DELETE', `/subscriptions/${subscriptionId}`)
     },
   },
 }
