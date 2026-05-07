@@ -47,15 +47,9 @@ export const PLAN_PRICES: Record<string, number> = {
 
 // ─── Client ──────────────────────────────────────────────────────────────────
 
+// ASAAS_BASE_URL must include /api/v3 — e.g. https://sandbox.asaas.com/api/v3
 function getBaseUrl(): string {
-  const base = (process.env.ASAAS_BASE_URL ?? 'https://api.asaas.com').replace(/\/$/, '')
-  // ASAAS API path prefix is /api/v3 — base URL should not include it
-  return base
-}
-
-function apiPath(path: string): string {
-  // Normalize: always use /api/v3 prefix
-  return `/api/v3${path.startsWith('/') ? path : '/' + path}`
+  return (process.env.ASAAS_BASE_URL ?? 'https://api.asaas.com/api/v3').replace(/\/$/, '')
 }
 
 function getApiKey(): string {
@@ -69,7 +63,8 @@ async function asaasRequest<T>(
   path: string,
   body?: unknown,
 ): Promise<T> {
-  const res = await fetch(`${getBaseUrl()}${apiPath(path)}`, {
+  const url = `${getBaseUrl()}${path.startsWith('/') ? path : '/' + path}`
+  const res = await fetch(url, {
     method,
     headers: {
       'Content-Type': 'application/json',
