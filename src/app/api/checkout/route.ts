@@ -2,8 +2,14 @@ export const runtime = 'edge'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getStripe, PLAN_PRICE_IDS } from '@/lib/stripe/client'
+import { asaas, PLAN_PRICES } from '@/lib/asaas/client'
 import { accountRepository } from '@/lib/supabase/repositories/account-repository'
+
+function nextDueDate(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().split('T')[0]
+}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -13,8 +19,8 @@ export async function POST(request: NextRequest) {
   }
 
   const { planId } = await request.json() as { planId: string }
-  const priceId = PLAN_PRICE_IDS[planId]
-  if (!priceId) {
+  const value = PLAN_PRICES[planId]
+  if (!value) {
     return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
   }
 
@@ -23,29 +29,36 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Account not found' }, { status: 404 })
   }
 
-  let customerId = account.stripe_customer_id ?? undefined
+  let customerId = account.asaas_customer_id ?? undefined
 
   if (!customerId) {
-    const customer = await getStripe().customers.create({
-      email: user.email,
-      metadata: { account_id: account.id, user_id: user.id },
-    })
-    customerId = customer.id
-    await accountRepository.updateStripe(account.id, { stripe_customer_id: customerId })
+    const existing = await asaas.customers.findByEmail(user.email ?? '')
+    if (existing.data.length > 0) {
+      customerId = existing.data[0].id
+    } else {
+      const customer = await asaas.customers.create({
+        name: account.name ?? user.email ?? 'Sellmetrics User',
+        email: user.email ?? '',
+        externalReference: account.id,
+      })
+      customerId = customer.id
+    }
+    await accountRepository.updateBilling(account.id, { asaas_customer_id: customerId })
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-  const session = await getStripe().checkout.sessions.create({
+  const subscription = await asaas.subscriptions.create({
     customer: customerId,
-    mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
-    payment_method_types: ['card'],
-    success_url: `${appUrl}/dashboard/account?checkout=success`,
-    cancel_url: `${appUrl}/dashboard/account?checkout=cancelled`,
-    subscription_data: {
-      metadata: { account_id: account.id },
-    },
+    billingType: 'UNDEFINED',
+    cycle: 'MONTHLY',
+    value,
+    nextDueDate: nextDueDate(),
+    description: `Sellmetrics ${planId.charAt(0).toUpperCase() + planId.slice(1)}`,
+    externalReference: account.id,
   })
 
-  return NextResponse.json({ url: session.url })
+  if (!subscription.invoiceUrl) {
+    return NextResponse.json({ error: 'Failed to generate payment link' }, { status: 500 })
+  }
+
+  return NextResponse.json({ url: subscription.invoiceUrl })
 }

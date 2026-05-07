@@ -95,9 +95,9 @@ export const accountRepository = {
     if (error) throw new Error(`Failed to update tokens: ${error.message}`)
   },
 
-  async updateStripe(accountId: string, fields: {
-    stripe_customer_id?: string | null
-    stripe_subscription_id?: string | null
+  async updateBilling(accountId: string, fields: {
+    asaas_customer_id?: string | null
+    asaas_subscription_id?: string | null
     plan_id?: string
     trial_ends_at?: string | null
   }): Promise<void> {
@@ -107,7 +107,7 @@ export const accountRepository = {
       .update(fields)
       .eq('id', accountId)
 
-    if (error) throw new Error(`Failed to update stripe fields: ${error.message}`)
+    if (error) throw new Error(`Failed to update billing fields: ${error.message}`)
   },
 
   async advanceOnboarding(accountId: string, step: number): Promise<void> {

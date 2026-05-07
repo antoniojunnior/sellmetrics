@@ -73,23 +73,38 @@ export default function BillingPanel({ account }: { account: Account }) {
       </div>
 
       {account.plan_id === 'free' && (
-        <div className="grid grid-cols-2 gap-3">
-          {(['starter', 'pro'] as const).map(planId => {
-            const plan = PLAN_LABELS[planId]
-            return (
-              <div key={planId} className="border border-gray-200 rounded-lg p-4">
-                <p className="font-medium text-gray-900">{plan.name}</p>
-                <p className="text-sm text-indigo-600 font-semibold mt-1">{plan.price}</p>
-                <button
-                  onClick={() => handleUpgrade(planId)}
-                  disabled={loading === planId}
-                  className="mt-3 w-full bg-indigo-600 text-white text-sm py-2 px-3 rounded-md hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {loading === planId ? 'Redirecionando...' : 'Assinar'}
-                </button>
-              </div>
-            )
-          })}
+        <div className="space-y-3">
+          <p className="text-xs text-gray-500 flex items-center gap-2">
+            Pagamento via
+            <span className="font-semibold text-gray-700">PIX</span>·
+            <span className="font-semibold text-gray-700">Boleto</span>·
+            <span className="font-semibold text-gray-700">Cartão</span>
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {(['starter', 'pro'] as const).map(planId => {
+              const plan = PLAN_LABELS[planId]
+              return (
+                <div key={planId} className="border border-gray-200 rounded-lg p-4">
+                  <p className="font-medium text-gray-900">{plan.name}</p>
+                  <p className="text-sm text-indigo-600 font-semibold mt-1">{plan.price}</p>
+                  <ul className="mt-2 space-y-1 mb-3">
+                    {plan.features.map(f => (
+                      <li key={f} className="text-xs text-gray-500 flex items-center gap-1">
+                        <span className="text-green-500">✓</span> {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => handleUpgrade(planId)}
+                    disabled={loading !== null}
+                    className="w-full bg-indigo-600 text-white text-sm py-2 px-3 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {loading === planId ? 'Redirecionando...' : 'Assinar'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </section>
